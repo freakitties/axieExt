@@ -1,0 +1,1 @@
+Freak's Axie Extension for Chrome (and compatible browsers)
