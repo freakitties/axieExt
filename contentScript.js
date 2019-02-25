@@ -103,40 +103,42 @@ async function run() {
             let anc = axieAnchors[i];
             let div = anc.firstElementChild;
             let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
-            let axie = await getAxieInfo(axieId);
-            if (axie.stage == 4) {
-                if (options[SHOW_PENDING_EXP_OPTION] && web3query) {
-                    await getTruePendingExp(axie);
-                    if (!anc.firstElementChild.children[2].children[2].children[0].textContent.includes(" + ")) {
-                        anc.firstElementChild.children[2].children[2].children[0].textContent += " + " + axie.truePending;
+            getAxieInfo(axieId).then(axie => {
+                if (axie.stage == 4) {
+                    if (options[SHOW_PENDING_EXP_OPTION] && web3query) {
+                        getTruePendingExp(axie).then(axie => {
+                            if (!anc.firstElementChild.children[2].children[2].children[0].textContent.includes(" + ")) {
+                                anc.firstElementChild.children[2].children[2].children[0].textContent += " + " + axie.truePending;
+                            }
+                        });
                     }
-                }
-                if (options[SHOW_BREEDS_STATS_OPTION]) {
-                    let content = document.createElement("div");
-                    content.textContent = "🍆: " + axie.breedCount + ", H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale;
-                    let cls = anc.firstElementChild.children[2].children[2].children[0];
-                    if (cls) {
-                        content.className = cls.classList[1];
+                    if (options[SHOW_BREEDS_STATS_OPTION]) {
+                        let content = document.createElement("div");
+                        content.textContent = "🍆: " + axie.breedCount + ", H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale;
+                        let cls = anc.firstElementChild.children[2].children[2].children[0];
+                        if (cls) {
+                            content.className = cls.classList[1];
+                        }
+                        if (anc.firstElementChild.children[2].children[2].childElementCount == 1) {
+                            anc.firstElementChild.children[2].children[2].append(content);
+                            //reduce canvas size
+                            let h = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.height);
+                            let w = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.width);
+                            anc.firstElementChild.children[4].firstElementChild.children[1].style.height = (h * 0.9).toFixed(2) + "px";
+                            anc.firstElementChild.children[4].firstElementChild.children[1].style.width = (w * 0.9).toFixed(2) + "px";
+                        }
                     }
-                    if (anc.firstElementChild.children[2].children[2].childElementCount == 1) {
-                        anc.firstElementChild.children[2].children[2].append(content);
-                        //reduce canvas size
-                        let h = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.height);
-                        let w = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.width);
-                        anc.firstElementChild.children[4].firstElementChild.children[1].style.height = (h * 0.9).toFixed(2) + "px";
-                        anc.firstElementChild.children[4].firstElementChild.children[1].style.width = (w * 0.9).toFixed(2) + "px";
+                    /*
+                    if (options[REPLACE_ANIMATION_OPTION]) {
+                        //replace animation with static image
+                        let img = document.createElement("img");
+                        img.src = axie.figure.static.idle;
+                        img.width = "200";
+                        anc.firstElementChild.children[4].firstElementChild.children[1].replaceWith(img);
                     }
+                    */
                 }
-                /*
-                if (options[REPLACE_ANIMATION_OPTION]) {
-                    //replace animation with static image
-                    let img = document.createElement("img");
-                    img.src = axie.figure.static.idle;
-                    img.width = "200";
-                    anc.firstElementChild.children[4].firstElementChild.children[1].replaceWith(img);
-                }
-                */
-            }
+            });
         }
     } catch (e) {
         console.log("ERROR: " + e);
