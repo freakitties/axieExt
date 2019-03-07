@@ -8,7 +8,7 @@ var expCheckpointInstance;
 var observer;
 const observerConfig = { attributes: false, childList: true, subtree: true };
 var currentURL = window.location.href;
-
+var axies = {};
 function init() {
     if (window.Web3) {
         //console.log("found web3");
@@ -18,19 +18,40 @@ function init() {
     }
 
     let callback = function(mutationsList, observer) {
+//console.log("list", mutationsList);
+        if (window.location.href == currentURL && !window.location.href.includes("/axie/")) {
+            return;
+        }
+//console.log("---");
+        let rescan = false;
+        let removed = false;
+        let added = false;
         for(var mutation of mutationsList) {
             if (mutation.type == 'childList') {
-                if (window.location.href != currentURL) {
-                    console.log('New URI detected. Rescanning.');
-                    currentURL = window.location.href;
-                    intID = setInterval(run, 1000);
-                } else if (window.location.href.includes("/axie/")) {
-                    //console.log("Axie Breeder module detected. Rescanning.");
-                    intID = setInterval(run, 1000);
+//console.log(mutation);
+                //kind of a hack. bug in website code reloads page with existing axies before loading new ones.
+                if (mutation.removedNodes.length > 0) {
+                    removed = true;
+                } else if (mutation.addedNodes.length > 0) {    //separate if?
+                    added = true;
                 }
-
+                if (added && removed) {
+                    rescan = true;
+                    break;
+                }
             }
         }
+        if (rescan) {
+            if (window.location.href.includes("/axie/")) {
+                //console.log("Axie Breeder module detected. Rescanning.");
+                intID = setInterval(run, 1000);
+            } else {
+                console.log('New URI detected. Rescanning.');
+                currentURL = window.location.href;
+                intID = setInterval(run, 1000);
+            }
+        }
+
     };
     observer = new MutationObserver(callback);
 }
@@ -58,21 +79,31 @@ function getCheckpoint(id) {
 }
 
 async function getTruePendingExp(axie) {
-    axie.pendingExp = axie.pendingExp ? axie.pendingExp : 0;
-    axie.totalSynced = await getCheckpoint(parseInt(axie.id));
-    axie.truePending = axie.pendingExp - axie.totalSynced;
-    return axie;
+    if ("truePending" in axies[parseInt(axie.id)]) {
+        return axies[axie.id];
+    } else {
+        axie.pendingExp = axie.pendingExp ? axie.pendingExp : 0;
+        axie.totalSynced = await getCheckpoint(parseInt(axie.id));
+        axie.truePending = axie.pendingExp - axie.totalSynced;
+        return axie;
+    }
 }
 
 async function getAxieInfo(id) {
-    //var result_json = await fetch('https://axieinfinity.com/api/axies/' + id).then(res => res.json());
-    var result_json = await fetch('https://api.axieinfinity.com/v1/axies/' + id).then(res => res.json());
-    return result_json;
+    if (id in axies) {
+        return axies[id];
+    } else {
+        //var result_json = await fetch('https://axieinfinity.com/api/axies/' + id).then(res => res.json());
+        var result_json = await fetch('https://api.axieinfinity.com/v1/axies/' + id).then(res => res.json());
+        axies[id] = result_json;
+        return result_json;
+    }
 }
 
 var initObserver = true;
 async function run() {
     let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
+//console.log(axieAnchors.length, intID);
     if (axieAnchors.length > 0 && intID != -1) {
         clearInterval(intID);
         intID = -1;
@@ -87,24 +118,28 @@ async function run() {
 
         if (window.location.href.includes("/axie/")) {
             let breedButton = document.evaluate("//span[text()='Breed']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            //if (breedButton && getComputedStyle(breedButton.parentNode.parentNode).backgroundColor != "rgb(203, 203, 203)") {
             if (breedButton) {
+//console.log("observing breed button ", getComputedStyle(breedButton.parentNode.parentNode).backgroundColor, breedButton);
                 //find the X button in the breeder window
                 let xpath = "//svg:path[@d='M2 12L12 2M12 12L2 2']";
                 let pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 let breedTarget = pathNode.parentNode.parentNode.parentNode.parentNode;
-                console.log("observing ", breedTarget);
                 observer.observe(breedTarget, observerConfig);
+            } else {
+//console.log("ignoring breed");
             }
         }
     }
 
+    let dbg;
     try {
         for (let i = 0; i < axieAnchors.length; i++) {
             let anc = axieAnchors[i];
             let div = anc.firstElementChild;
             let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
             getAxieInfo(axieId).then(axie => {
-                if (axie.stage == 4) {
+                if (axie.stage > 3) {
                     if (options[SHOW_PENDING_EXP_OPTION] && web3query) {
                         getTruePendingExp(axie).then(axie => {
                             if (!anc.firstElementChild.children[2].children[2].children[0].textContent.includes(" + ")) {
@@ -112,15 +147,35 @@ async function run() {
                             }
                         });
                     }
+                }
+                if (axie.stage > 2) {
                     if (options[SHOW_BREEDS_STATS_OPTION]) {
+                        dbg = anc;
                         let content = document.createElement("div");
-                        content.textContent = "🍆: " + axie.breedCount + ", H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale;
-                        let cls = anc.firstElementChild.children[2].children[2].children[0];
-                        if (cls) {
-                            content.className = cls.classList[1];
+                        let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale;
+                        if (axie.stage == 3) {
+                            content.textContent = stats;
+                            let extraDiv = document.createElement("div");
+                            anc.firstElementChild.children[2].append(extraDiv);
+                            //Hack. Hardcoded values taken from adult card. Will not dymanically update if AI change their styles.
+                            content.style["font-size"] = "12px";
+                            content.style["color"] = "rgb(96, 96, 96)";
+                            content.style["padding"] = "2px 0px";
+                            content.style["border-radius"] = "8px";
+
+                        } else if (axie.stage > 3) {
+                            content.textContent = "🍆: " + axie.breedCount + ", " + stats;
+                            let cls = anc.firstElementChild.children[2].children[2].children[0];
+                            if (cls) {
+                                content.className = cls.classList[1];
+                            }
                         }
-                        if (anc.firstElementChild.children[2].children[2].childElementCount == 1) {
+                        //prevent
+                        if ((anc.firstElementChild.children[2].children[2].childElementCount == 1 && axie.stage != 3) || (axie.stage == 3 && anc.firstElementChild.children[2].children[2].childElementCount == 0)) {
                             anc.firstElementChild.children[2].children[2].append(content);
+                            //remove part's box margin to prevent overlap with price
+                            anc.firstElementChild.children[3].style["margin-top"] = "0px";
+
                             //reduce canvas size
                             let h = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.height);
                             let w = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.width);
@@ -138,11 +193,15 @@ async function run() {
                     }
                     */
                 }
+            }).catch((e) => {
+                console.log("ERROR: " + e);
+                console.log(e.stack);
             });
         }
     } catch (e) {
         console.log("ERROR: " + e);
         console.log(e.stack);
+        console.log(dbg);
     }
 }
 
