@@ -26,8 +26,11 @@
     "content_scripts": [
         {
             "matches": ["https://axieinfinity.com/my-axies*", "https://axieinfinity.com/encyclopedia*", "https://axieinfinity.com/marketplace*", "https://axieinfinity.com/profile/*", "https://axieinfinity.com/axie/*"],
-            "js": ["lib/web3.min.js", "options.js", "contentScript.js"]
+            "js": ["lib/web3.min.js", "options.js", "traitmapping.js", "contentScript.js"]
         }
+    ],
+    "web_accessible_resources": [
+      "body-parts.json"
     ],
     "manifest_version": 2
 }
