@@ -4,13 +4,10 @@ const expCheckpointAddress = "0x71FfC95Ca3BcEbF26024f689F40006182916167f";
 var web3query = null;
 var expCheckpointContract;
 var expCheckpointInstance;
-
 var observer;
-const observerConfig = { attributes: false, childList: true, subtree: true };
-var currentURL = window.location.href;
-var axies = {};
 
-var colorMap = {
+const observerConfig = { attributes: false, childList: true, subtree: true };
+const colorMap = {
     "plant": "rgb(108, 192, 0)",
     "reptile": "rgb(200, 138, 224)",
     "beast": "rgb(255, 184, 18)",
@@ -18,6 +15,26 @@ var colorMap = {
     "bird": "rgb(255, 139, 189)",
     "bug": "rgb(255, 83, 65)"
 }
+const classGeneMap = {"0000": "beast", "0001": "bug", "0010": "bird", "0011": "plant", "0100": "aquatic", "0101": "reptile", "1000": "???", "1001": "???", "1010": "???"};
+const typeOrder = {"patternColor": 1, "eyes": 2, "mouth": 3, "ears": 4, "horn": 5, "back": 6, "tail": 7};
+const geneColorMap = {"0000": {"0010": "ffec51","0011": "ffa12a","0100": "f0c66e", "0110": "60afce"},
+"0001": {"0010": "ff7183", "0011": "ff6d61", "0100": "f74e4e",},
+"0010": {"0010": "ff9ab8", "0011": "ffb4bb","0100": "ff778e"},
+"0011": {"0010": "ccef5e", "0011": "efd636","0100": "c5ffd9"},
+"0100": {"0010": "4cffdf", "0011": "2de8f2","0100": "759edb", "0110": "ff5a71"},
+"0101": {"0010": "fdbcff", "0011": "ef93ff","0100": "f5e1ff", "0110": "43e27d"},
+//nut hidden_1
+"1000": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"},
+//star hidden_2
+"1001": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"},
+//moon hidden_3
+"1010": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"}};
+const PROBABILITIES = {d: 0.375, r1: 0.09375, r2: 0.03125};
+const parts = ["eyes", "mouth" ,"ears", "horn", "back", "tail"];
+const MAX_QUALITY = 6 * (PROBABILITIES.d + PROBABILITIES.r1 + PROBABILITIES.r2);
+
+var currentURL = window.location.href;
+var axies = {};
 
 async function init() {
     if (window.Web3) {
@@ -85,23 +102,6 @@ async function getBodyParts() {
     }
 }
 
-var classGeneMap = {"0000": "beast", "0001": "bug", "0010": "bird", "0011": "plant", "0100": "aquatic", "0101": "reptile", "1000": "???", "1001": "???", "1010": "???"};
-var typeOrder = {"patternColor": 1, "eyes": 2, "mouth": 3, "ears": 4, "horn": 5, "back": 6, "tail": 7};
-var geneColorMap = {"0000": {"0010": "ffec51","0011": "ffa12a","0100": "f0c66e", "0110": "60afce"},
-"0001": {"0010": "ff7183", "0011": "ff6d61", "0100": "f74e4e",},
-"0010": {"0010": "ff9ab8", "0011": "ffb4bb","0100": "ff778e"},
-"0011": {"0010": "ccef5e", "0011": "efd636","0100": "c5ffd9"},
-"0100": {"0010": "4cffdf", "0011": "2de8f2","0100": "759edb", "0110": "ff5a71"},
-"0101": {"0010": "fdbcff", "0011": "ef93ff","0100": "f5e1ff", "0110": "43e27d"},
-//nut hidden_1
-"1000": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"},
-//star hidden_2
-"1001": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"},
-//moon hidden_3
-"1010": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"}};
-const PROBABILITIES = {d: 0.375, r1: 0.09375, r2: 0.03125};
-const parts = ["eyes", "mouth" ,"ears", "horn", "back", "tail"];
-const MAX_QUALITY = 6 * (PROBABILITIES.d + PROBABILITIES.r1 + PROBABILITIES.r2);
 function getQualityAndPureness(traits, cls) {
     let quality = 0;
     let dPureness = 0;
@@ -174,13 +174,15 @@ function getColorsFromGroup(group, cls) {
 
 //hack. key: part name + " " + part type
 var partsClassMap = {};
-function getPartName(cls, part, region, binary) {
+function getPartName(cls, part, region, binary, mystic=false) {
     let trait;
     if (binary in binarytraits[cls][part]) {
-        if (region in binarytraits[cls][part][binary]) {
+        if (mystic) {
+            trait = binarytraits[cls][part][binary]["mystic"];
+        } else if (region in binarytraits[cls][part][binary]) {
             trait = binarytraits[cls][part][binary][region];
         } else if ("global" in binarytraits[cls][part][binary]) {
-            trait = binarytraits[cls][part][binary]["global"];      //don't use mystic name. breeding doesn't pass mystic.
+            trait = binarytraits[cls][part][binary]["global"];
         } else {
             trait = "UNKNOWN Regional " + cls + " " + part;
         }
@@ -196,7 +198,7 @@ function getPartsFromGroup(part, group, region) {
     let mystic = group.slice(0, 2) == "11";
     let dClass = classGeneMap[group.slice(2, 6)];
     let dBin = group.slice(6, 12);
-    let dName = getPartName(dClass, part, region, dBin);
+    let dName = getPartName(dClass, part, region, dBin, mystic);
 
     let r1Class = classGeneMap[group.slice(12, 16)];
     let r1Bin = group.slice(16, 22);
@@ -282,7 +284,7 @@ async function getAxieInfo(id) {
 
 function appendTrait(table, trait) {
     let row = document.createElement("tr");
-    let positions = [];
+    let mystic = trait["mystic"];
     for (let position in trait) {
         if (position == "mystic") continue;
         let data = document.createElement("td");
@@ -291,20 +293,12 @@ function appendTrait(table, trait) {
             span.style.color = colorMap[trait[position].class];
         }
         span.textContent = trait[position].name;
+        if (position == "d" && mystic) {
+            span.textContent += "*";
+        }
         data.appendChild(span);
         row.appendChild(data);
-        //positions.push(span);
     }
-    /*
-    let comma = document.createElement("span");
-    comma.textContent = ", ";
-    div.appendChild(positions[0]);
-    div.appendChild(comma);
-    div.appendChild(positions[1]);
-    div.appendChild(comma.cloneNode(true));
-    div.appendChild(positions[2]);
-    div.appendChild(document.createElement("br"));
-    */
     table.appendChild(row);
 
 }
@@ -404,6 +398,12 @@ async function run() {
                             traits.style["padding-top"] = "10px";
                             traits.style["padding-bottom"] = "10px";
                             traits.style["padding-right"] = "10px";
+                            traits.style.left = "-18px";
+                            if (axie.stage == 3) {
+                                traits.style.top = "-87px";
+                            } else {
+                                traits.style.top = "-60px";
+                            }
                             content.addEventListener("mouseover", function() {
                                 traits.style.display = "block";
                             });
