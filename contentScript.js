@@ -174,11 +174,13 @@ function getColorsFromGroup(group, cls) {
 
 //hack. key: part name + " " + part type
 var partsClassMap = {};
-function getPartName(cls, part, region, binary, mystic=false) {
+function getPartName(cls, part, region, binary, skinBinary="00") {
     let trait;
     if (binary in binarytraits[cls][part]) {
-        if (mystic) {
+        if (skinBinary == "11") {
             trait = binarytraits[cls][part][binary]["mystic"];
+        } else if (skinBinary == "10") {
+            trait = binarytraits[cls][part][binary]["xmas"];
         } else if (region in binarytraits[cls][part][binary]) {
             trait = binarytraits[cls][part][binary][region];
         } else if ("global" in binarytraits[cls][part][binary]) {
@@ -194,11 +196,12 @@ function getPartName(cls, part, region, binary, mystic=false) {
     return trait;
 }
 
-function getPartsFromGroup(part, group, region) {
-    let mystic = group.slice(0, 2) == "11";
+function getPartsFromGroup(part, group, region,) {
+    let skinBinary = group.slice(0, 2);
+    let mystic = skinBinary == "11";
     let dClass = classGeneMap[group.slice(2, 6)];
     let dBin = group.slice(6, 12);
-    let dName = getPartName(dClass, part, region, dBin, mystic);
+    let dName = getPartName(dClass, part, region, dBin, skinBinary);
 
     let r1Class = classGeneMap[group.slice(12, 16)];
     let r1Bin = group.slice(16, 22);
@@ -227,7 +230,7 @@ function getTraits(genes) {
 }
 
 function getPartFromName(traitType, partName) {
-    let traitId = traitType.toLowerCase() + "-" + partName.toLowerCase().replace(/\s/g, "-").replace(/[\?']/g, "");
+    let traitId = traitType.toLowerCase() + "-" + partName.toLowerCase().replace(/\s/g, "-").replace(/[\?'\.]/g, "");
     return bodyPartsMap[traitId];
 }
 
@@ -307,7 +310,7 @@ var initObserver = true;
 async function run() {
     let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
 //console.log(axieAnchors.length, intID);
-    if (axieAnchors.length > 0 && intID != -1) {
+    if (axieAnchors.length > 0 && intID != -1 && observer != null) {
         clearInterval(intID);
         intID = -1;
     } else {
@@ -355,9 +358,10 @@ async function run() {
                     if (options[SHOW_BREEDS_STATS_OPTION]) {
                         dbg = anc;
                         let content = document.createElement("div");
+                        let statsDiv = document.createElement("div");
                         let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + Math.round(axie.quality * 100) + "%";
                         if (axie.stage == 3) {
-                            content.textContent = stats;
+                            statsDiv.textContent = stats;
                             let extraDiv = document.createElement("div");
                             anc.firstElementChild.children[2].append(extraDiv);
                             //Hack. Hardcoded values taken from adult card. Will not dymanically update if AI change their styles.
@@ -367,7 +371,7 @@ async function run() {
                             content.style["border-radius"] = "8px";
 
                         } else if (axie.stage > 3) {
-                            content.textContent = "🍆: " + axie.breedCount + ", " + stats;
+                            statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
                             let cls = anc.firstElementChild.children[2].children[2].children[0];
                             if (cls) {
                                 content.className = cls.classList[1];
@@ -400,17 +404,18 @@ async function run() {
                             traits.style["padding-right"] = "10px";
                             traits.style.left = "-18px";
                             if (axie.stage == 3) {
-                                traits.style.top = "-87px";
+                                traits.style.top = "-90px";
                             } else {
-                                traits.style.top = "-60px";
+                                traits.style.top = "-63px";
                             }
-                            content.addEventListener("mouseover", function() {
+                            statsDiv.addEventListener("mouseover", function() {
                                 traits.style.display = "block";
                             });
-                            content.addEventListener("mouseout", function() {
+                            statsDiv.addEventListener("mouseout", function() {
                                 traits.style.display = "none";
                             });
-                            content.append(traits);
+                            content.appendChild(statsDiv);
+                            content.appendChild(traits);
                             anc.firstElementChild.children[2].children[2].append(content);
                             //remove part's box margin to prevent overlap with price
                             anc.firstElementChild.children[3].style["margin-top"] = "0px";
