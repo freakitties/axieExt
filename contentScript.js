@@ -306,6 +306,48 @@ function appendTrait(table, trait) {
 
 }
 
+function genGenesDiv(axie, mouseOverNode, type="list") {
+    let traits = document.createElement("div");
+    let table = document.createElement("table");
+    appendTrait(table, {d: {name: "D"}, r1: {name: "R1"}, r2: {name: "R2"}});
+    appendTrait(table, axie.traits.eyes);
+    appendTrait(table, axie.traits.ears);
+    appendTrait(table, axie.traits.mouth);
+    appendTrait(table, axie.traits.horn);
+    appendTrait(table, axie.traits.back);
+    appendTrait(table, axie.traits.tail);
+    traits.appendChild(table);
+    traits.style.display = "none";
+    traits.style.position = "absolute";
+    traits.style["z-index"] = "9999";
+    traits.style.background = "white";
+    traits.style.border = "grey";
+    traits.style["border-style"] = "solid";
+    traits.style["border-width"] = "1px";
+    traits.style["border-radius"] = "20px";
+    traits.style["white-space"] = "nowrap";
+    traits.style["padding-left"] = "10px"
+    traits.style["padding-top"] = "10px";
+    traits.style["padding-bottom"] = "10px";
+    traits.style["padding-right"] = "10px";
+    traits.style.top = "-63px";
+    if (type == "list") {
+        if (axie.stage == 3) {
+            traits.style.top = "-90px";
+        }
+        traits.style.left = "-18px";
+    } else if (type == "details") {
+        traits.style.left = "0px";
+    }
+    mouseOverNode.addEventListener("mouseover", function() {
+        traits.style.display = "block";
+    });
+    mouseOverNode.addEventListener("mouseout", function() {
+        traits.style.display = "none";
+    });
+    return traits;
+}
+
 var initObserver = true;
 async function run() {
     let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
@@ -336,6 +378,21 @@ async function run() {
 //console.log("ignoring breed");
             }
         }
+    }
+
+    let onAxieDetailsPage = false;
+    if (currentURL.startsWith("https://axieinfinity.com/axie/")) {
+        let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
+        let pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        let detailsNode =  pathNode.parentNode.parentNode.parentNode.parentNode;
+        let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
+        getAxieInfo(axieId).then(axie => {
+            let traits = genGenesDiv(axie, detailsNode, "details");
+            detailsNode.appendChild(traits);
+        }).catch((e) => {
+            console.log("ERROR Details: " + e);
+            console.log(e.stack);
+        });
     }
 
     let dbg;
@@ -379,41 +436,7 @@ async function run() {
                         }
                         //prevent
                         if ((anc.firstElementChild.children[2].children[2].childElementCount == 1 && axie.stage != 3) || (axie.stage == 3 && anc.firstElementChild.children[2].children[2].childElementCount == 0)) {
-                            let traits = document.createElement("div");
-                            let table = document.createElement("table");
-                            appendTrait(table, {d: {name: "D"}, r1: {name: "R1"}, r2: {name: "R2"}});
-                            appendTrait(table, axie.traits.eyes);
-                            appendTrait(table, axie.traits.ears);
-                            appendTrait(table, axie.traits.mouth);
-                            appendTrait(table, axie.traits.horn);
-                            appendTrait(table, axie.traits.back);
-                            appendTrait(table, axie.traits.tail);
-                            traits.appendChild(table);
-                            traits.style.display = "none";
-                            traits.style.position = "absolute";
-                            traits.style["z-index"] = "9999";
-                            traits.style.background = "white";
-                            traits.style.border = "grey";
-                            traits.style["border-style"] = "solid";
-                            traits.style["border-width"] = "1px";
-                            traits.style["border-radius"] = "20px";
-                            traits.style["white-space"] = "nowrap";
-                            traits.style["padding-left"] = "10px"
-                            traits.style["padding-top"] = "10px";
-                            traits.style["padding-bottom"] = "10px";
-                            traits.style["padding-right"] = "10px";
-                            traits.style.left = "-18px";
-                            if (axie.stage == 3) {
-                                traits.style.top = "-90px";
-                            } else {
-                                traits.style.top = "-63px";
-                            }
-                            statsDiv.addEventListener("mouseover", function() {
-                                traits.style.display = "block";
-                            });
-                            statsDiv.addEventListener("mouseout", function() {
-                                traits.style.display = "none";
-                            });
+                            let traits = genGenesDiv(axie, statsDiv);
                             content.appendChild(statsDiv);
                             content.appendChild(traits);
                             anc.firstElementChild.children[2].children[2].append(content);
