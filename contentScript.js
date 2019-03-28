@@ -39,7 +39,7 @@ var axies = {};
 async function init() {
     if (window.Web3) {
         //console.log("found web3");
-        web3query = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/mew'));
+        web3query = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/e9394133a3824a4d8ececb4384c3b1a2'));
         expCheckpointContract = web3query.eth.contract(expCheckpointABI);
         expCheckpointInstance = expCheckpointContract.at(expCheckpointAddress);
     }
