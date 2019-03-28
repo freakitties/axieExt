@@ -275,12 +275,14 @@ async function getAxieInfo(id) {
         var result_json = await fetch('https://api.axieinfinity.com/v1/axies/' + id).then(res => res.json());
         axies[id] = result_json;
 
-        axies[id].genes = genesToBin(BigInt(axies[id].genes));
-        let traits = getTraits(axies[id].genes);
-        let qp = getQualityAndPureness(traits, axies[id].class);
-        axies[id].traits = traits;
-        axies[id].quality = qp.quality;
-        axies[id].pureness = qp.pureness;
+        if (result_json.stage > 2) {
+            axies[id].genes = genesToBin(BigInt(axies[id].genes));
+            let traits = getTraits(axies[id].genes);
+            let qp = getQualityAndPureness(traits, axies[id].class);
+            axies[id].traits = traits;
+            axies[id].quality = qp.quality;
+            axies[id].pureness = qp.pureness;
+        }
         return axies[id];
     }
 }
@@ -382,17 +384,15 @@ async function run() {
 
     let onAxieDetailsPage = false;
     if (currentURL.startsWith("https://axieinfinity.com/axie/")) {
-        let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
-        let pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        let detailsNode =  pathNode.parentNode.parentNode.parentNode.parentNode;
         let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
-        getAxieInfo(axieId).then(axie => {
+        let axie = await getAxieInfo(axieId);
+        if (axie.stage > 2) {
+            let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
+            let pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            let detailsNode =  pathNode.parentNode.parentNode.parentNode.parentNode;
             let traits = genGenesDiv(axie, detailsNode, "details");
             detailsNode.appendChild(traits);
-        }).catch((e) => {
-            console.log("ERROR Details: " + e);
-            console.log(e.stack);
-        });
+        }
     }
 
     let dbg;
@@ -402,6 +402,7 @@ async function run() {
             let div = anc.firstElementChild;
             let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
             getAxieInfo(axieId).then(axie => {
+
                 if (axie.stage > 3) {
                     if (options[SHOW_PENDING_EXP_OPTION] && web3query) {
                         getTruePendingExp(axie).then(axie => {
