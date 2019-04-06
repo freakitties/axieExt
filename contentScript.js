@@ -87,18 +87,18 @@ async function init() {
 
 var bodyPartsMap = {};
 async function getBodyParts() {
-    let parts = await fetch('https://axieinfinity.com/api/body-parts').
+    let parts = await fetch('https://axieinfinity.com/api/v2/body-parts').
         then(res => res.json()).
         catch(async (err) => {
             console.log("Failed to get body parts from the API");
             //API is unreliable. fall back to hard-coded local copy.
             let parts = await fetch(chrome.extension.getURL('body-parts.json')).then(res => res.json());
             for (let i in parts) {
-                bodyPartsMap[parts[i].id] = parts[i];
+                bodyPartsMap[parts[i].partId] = parts[i];
             }
         });
     for (let i in parts) {
-        bodyPartsMap[parts[i].id] = parts[i];
+        bodyPartsMap[parts[i].partId] = parts[i];
     }
 }
 
@@ -271,7 +271,6 @@ async function getAxieInfo(id) {
     if (id in axies) {
         return axies[id];
     } else {
-        //var result_json = await fetch('https://axieinfinity.com/api/axies/' + id).then(res => res.json());
         var result_json = await fetch('https://api.axieinfinity.com/v1/axies/' + id).then(res => res.json());
         axies[id] = result_json;
 
