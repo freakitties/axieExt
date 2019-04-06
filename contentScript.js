@@ -87,7 +87,7 @@ async function init() {
 
 var bodyPartsMap = {};
 async function getBodyParts() {
-    let parts = await fetch('https://axieinfinity.com/api/v2/body-parts').
+    let parts = fetch('https://axieinfinity.com/api/v2/body-parts').
         then(res => res.json()).
         catch(async (err) => {
             console.log("Failed to get body parts from the API");
