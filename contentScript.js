@@ -271,7 +271,7 @@ async function getAxieInfo(id) {
     if (id in axies) {
         return axies[id];
     } else {
-        var result_json = await fetch('https://api.axieinfinity.com/v1/axies/' + id).then(res => res.json());
+        var result_json = await fetch('https://axieinfinity.com/api/v2/axies/' + id).then(res => res.json());
         axies[id] = result_json;
 
         if (result_json.stage > 2) {
