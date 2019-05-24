@@ -18,6 +18,10 @@ function getOptions(callback) {
     chrome.storage.sync.get([ENABLE_OPTION, SHOW_PENDING_EXP_OPTION, SHOW_BREEDS_STATS_OPTION], callback);
 }
 
+function getOption(key, callback) {
+    chrome.storage.sync.get([key], callback);
+}
+
 function resetOptions() {
     console.log("reset options");
     let defaultOptions = {};

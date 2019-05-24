@@ -17,3 +17,20 @@ chrome.runtime.onInstalled.addListener(function() {
     });
 });
 
+
+chrome.webRequest.onBeforeRequest.addListener(
+  function(details) {
+    console.log(details);
+    if (details.url.startsWith("https://axieinfinity.com/land-api/profile/land/")) {
+        let idx = details.url.lastIndexOf("/");
+        let accountId = parseInt(details.url.slice(idx + 1));
+        console.log("acctid: " + accountId);
+        putOption("axieAccountId", accountId);
+        getOption("axieAccountId", (response) => {
+            console.log("retrieved: " + response["axieAccountId"]);
+        });
+    }
+  },
+  {urls: ["https://axieinfinity.com/land-api/profile/land/*", "https://land.axieinfinity.com/inventory"]},
+  ["requestBody"]
+);
