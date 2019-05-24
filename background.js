@@ -26,9 +26,6 @@ chrome.webRequest.onBeforeRequest.addListener(
         let accountId = parseInt(details.url.slice(idx + 1));
         console.log("acctid: " + accountId);
         putOption("axieAccountId", accountId);
-        getOption("axieAccountId", (response) => {
-            console.log("retrieved: " + response["axieAccountId"]);
-        });
     }
   },
   {urls: ["https://axieinfinity.com/land-api/profile/land/*", "https://land.axieinfinity.com/inventory"]},
