@@ -1,6 +1,6 @@
 {
     "name": "Freak's Axie Extension",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "An extension to help play Axie Infinity.",
     "permissions": ["activeTab", "declarativeContent", "storage"],
     "icons": {
@@ -20,13 +20,13 @@
         }
     },
     "background": {
-      "scripts": ["options.js", "background.js"],
+      "scripts": ["options.js", "lib/web3.min.js", "background.js"],
       "persistent": false
     },
     "content_scripts": [
         {
             "matches": ["https://axieinfinity.com/my-axies*", "https://axieinfinity.com/encyclopedia*", "https://axieinfinity.com/marketplace*", "https://axieinfinity.com/profile/*", "https://axieinfinity.com/axie/*"],
-            "js": ["lib/web3.min.js", "options.js", "traitmapping.js", "contentScript.js"]
+            "js": ["options.js", "traitmapping.js", "contentScript.js"]
         }
     ],
     "web_accessible_resources": [
