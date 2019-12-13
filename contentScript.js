@@ -469,7 +469,7 @@ async function run() {
                 if (axie.stage > 3) {
                     if (options[SHOW_PENDING_EXP_OPTION]) {
                         getTruePendingExp(axie).then(axie => {
-                            if (!card.children[2].textContent.includes(" + ")) {
+                            if (card.children[2].textContent.includes("Exp") && !card.children[2].textContent.includes(" + ")) {
                                 card.children[2].textContent += " + " + axie.truePending;
                             }
                         });
