@@ -351,7 +351,7 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
 
     if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
         traits.style.background = "var(--color-gray-5)";
-        //traits.style.top = "-85px";
+        traits.style.top = "-85px";
         if (type == "list") {
             if (axie.stage == 3) {
                 traits.style.top = "-85px";
