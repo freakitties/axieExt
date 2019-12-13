@@ -66,11 +66,11 @@ async function init() {
         if (rescan) {
             if (window.location.href.includes("/axie/")) {
                 //console.log("Axie Breeder module detected. Rescanning.");
-                intID = setInterval(run, 1000);
+                setTimeout(run, 1000);
             } else {
                 console.log('New URI detected. Rescanning.');
                 currentURL = window.location.href;
-                intID = setInterval(run, 1000);
+                setTimeout(run, 1000);
             }
         }
     };
@@ -391,7 +391,7 @@ var initObserver = true;
 async function run() {
     let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
 //console.log(axieAnchors.length, intID);
-    if (axieAnchors.length > 0 && intID != -1 && observer != null) {
+    if (axieAnchors.length > 0 && observer != null) {
         clearInterval(intID);
         intID = -1;
     } else {
