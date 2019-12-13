@@ -43,20 +43,25 @@ async function init() {
         let rescan = false;
         let removed = false;
         let added = false;
-        for(var mutation of mutationsList) {
-            if (mutation.type == 'childList') {
+        if (!window.location.href.startsWith("https://marketplace.axieinfinity.com/")) {
+            for(var mutation of mutationsList) {
+                if (mutation.type == 'childList') {
 //console.log(mutation);
-                //kind of a hack. bug in website code reloads page with existing axies before loading new ones.
-                if (mutation.removedNodes.length > 0) {
-                    removed = true;
-                } else if (mutation.addedNodes.length > 0) {    //separate if?
-                    added = true;
-                }
-                if (added && removed) {
-                    rescan = true;
-                    break;
+                    //kind of a hack. bug in website code reloads page with existing axies before loading new ones.
+                    if (mutation.removedNodes.length > 0) {
+                        removed = true;
+                    } else if (mutation.addedNodes.length > 0) {    //separate if?
+                        added = true;
+                    }
+                    if (added && removed) {
+                        rescan = true;
+                        break;
+                    }
                 }
             }
+        } else {
+            rescan = true;
+            currentURL = window.location.href;
         }
         if (rescan) {
             if (window.location.href.includes("/axie/")) {
@@ -68,7 +73,6 @@ async function init() {
                 intID = setInterval(run, 1000);
             }
         }
-
     };
     observer = new MutationObserver(callback);
 }
@@ -269,6 +273,36 @@ async function getAxieInfo(id) {
     }
 }
 
+//Promisify getCheckpoint
+function getCheckpoint(id) {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({contentScriptQuery: "getCheckpoint", axieId: id}, function(result) {
+            resolve(result.totalSynced);
+        });
+    });
+}
+
+function getAxieInfoMarket(id) {
+    return new Promise((resolve, reject) => {
+        if (id in axies) {
+            resolve(axies[id]);
+        } else {
+            chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
+                axies[id] = result;
+                if (result.stage > 2) {
+                    axies[id].genes = genesToBin(BigInt(axies[id].genes));
+                    let traits = getTraits(axies[id].genes);
+                    let qp = getQualityAndPureness(traits, axies[id].class);
+                    axies[id].traits = traits;
+                    axies[id].quality = qp.quality;
+                    axies[id].pureness = qp.pureness;
+                }
+                resolve(result);
+            });
+        }
+    });
+}
+
 function appendTrait(table, trait) {
     let row = document.createElement("tr");
     let mystic = trait["mystic"];
@@ -283,6 +317,7 @@ function appendTrait(table, trait) {
         if (position == "d" && mystic) {
             span.textContent += "*";
         }
+        data.style["padding-right"] = "5px";
         data.appendChild(span);
         row.appendChild(data);
     }
@@ -304,7 +339,6 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
     traits.style.display = "none";
     traits.style.position = "absolute";
     traits.style["z-index"] = "9999";
-    traits.style.background = "white";
     traits.style.border = "grey";
     traits.style["border-style"] = "solid";
     traits.style["border-width"] = "1px";
@@ -314,14 +348,31 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
     traits.style["padding-top"] = "10px";
     traits.style["padding-bottom"] = "10px";
     traits.style["padding-right"] = "10px";
-    traits.style.top = "-63px";
-    if (type == "list") {
-        if (axie.stage == 3) {
-            traits.style.top = "-90px";
+
+    if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
+        traits.style.background = "var(--color-gray-5)";
+        //traits.style.top = "-85px";
+        if (type == "list") {
+            if (axie.stage == 3) {
+                traits.style.top = "-85px";
+            }
+            traits.style.left = "0px";
+        } else if (type == "details") {
+            traits.style.left = "auto";
+            traits.style.top = "auto";
         }
-        traits.style.left = "-18px";
-    } else if (type == "details") {
-        traits.style.left = "0px";
+    } else {
+        traits.style.background = "white";
+        //traits.style.background = window.getComputedStyle(document.getRootNode().body, null).getPropertyValue("background-color");
+        traits.style.top = "-63px";
+        if (type == "list") {
+            if (axie.stage == 3) {
+                traits.style.top = "-90px";
+            }
+            traits.style.left = "-18px";
+        } else if (type == "details") {
+            traits.style.left = "0px";
+        }
     }
     mouseOverNode.addEventListener("mouseover", function() {
         traits.style.display = "block";
@@ -330,6 +381,10 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
         traits.style.display = "none";
     });
     return traits;
+}
+
+function insertAfter(newNode, referenceNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
 }
 
 var initObserver = true;
@@ -345,11 +400,15 @@ async function run() {
 //console.log("running");
     if (initObserver) {
         let targetNode = axieAnchors[0].parentElement;
+        if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
+            //targetNode = targetNode.parentElement;
+            targetNode = document.body;
+        }
         observer.observe(targetNode, observerConfig);
         initObserver = false;
 
         if (window.location.href.includes("/axie/")) {
-            let breedButton = document.evaluate("//span[text()='Breed']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            let breedButton = document.evaluate("//span[text()='Breed' or text()='繁殖']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             //if (breedButton && getComputedStyle(breedButton.parentNode.parentNode).backgroundColor != "rgb(203, 203, 203)") {
             if (breedButton) {
 //console.log("observing breed button ", getComputedStyle(breedButton.parentNode.parentNode).backgroundColor, breedButton);
@@ -365,15 +424,34 @@ async function run() {
     }
 
     let onAxieDetailsPage = false;
-    if (currentURL.startsWith("https://axieinfinity.com/axie/")) {
+    if (currentURL.startsWith("https://axieinfinity.com/axie/") || currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
         let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
-        let axie = await getAxieInfo(axieId);
+        let axie;
+        if (currentURL.startsWith("https://axieinfinity.com/axie/")){
+            axie = await getAxieInfo(axieId);
+        } else if (currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+            axie = await getAxieInfoMarket(axieId);
+        }
+
         if (axie.stage > 2) {
             let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
-            let pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            let detailsNode =  pathNode.parentNode.parentNode.parentNode.parentNode;
+            let pathNode;
+            let detailsNode;
+            if (currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+                //this will break when localization is implemented on the site
+                xpath = "//div[text()='Stats']";
+                pathNode = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                detailsNode = pathNode;
+            } else {
+                pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                detailsNode =  pathNode.parentNode.parentNode.parentNode.parentNode;
+            }
             let traits = genGenesDiv(axie, detailsNode, "details");
-            detailsNode.appendChild(traits);
+            if (detailsNode.childElementCount == 0 && currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+                detailsNode.appendChild(traits);
+            } else if (!currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+                detailsNode.appendChild(traits);
+            }
         }
     }
 
@@ -383,13 +461,16 @@ async function run() {
             let anc = axieAnchors[i];
             let div = anc.firstElementChild;
             let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
-            getAxieInfo(axieId).then(axie => {
 
+            //keep these blocks separate...UI likely will change
+            if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
+                let axie = await getAxieInfoMarket(axieId);
+                let card = anc.firstElementChild.firstElementChild.firstElementChild;
                 if (axie.stage > 3) {
                     if (options[SHOW_PENDING_EXP_OPTION]) {
                         getTruePendingExp(axie).then(axie => {
-                            if (!anc.firstElementChild.children[2].children[2].children[0].textContent.includes(" + ")) {
-                                anc.firstElementChild.children[2].children[2].children[0].textContent += " + " + axie.truePending;
+                            if (!card.children[2].textContent.includes(" + ")) {
+                                card.children[2].textContent += " + " + axie.truePending;
                             }
                         });
                     }
@@ -397,56 +478,95 @@ async function run() {
                 if (axie.stage > 2) {
                     if (options[SHOW_BREEDS_STATS_OPTION]) {
                         dbg = anc;
-                        let content = document.createElement("div");
+                        let content = document.createElement("small");
                         let statsDiv = document.createElement("div");
                         let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + Math.round(axie.quality * 100) + "%";
+                        content.className = card.children[2].className;
                         if (axie.stage == 3) {
                             statsDiv.textContent = stats;
-                            let extraDiv = document.createElement("div");
-                            anc.firstElementChild.children[2].append(extraDiv);
-                            //Hack. Hardcoded values taken from adult card. Will not dymanically update if AI change their styles.
-                            content.style["font-size"] = "12px";
-                            content.style["color"] = "rgb(96, 96, 96)";
-                            content.style["padding"] = "2px 0px";
-                            content.style["border-radius"] = "8px";
-
+                            content = card.children[2];
+                            content.className = content.className.replace("invisible", "visible");
+                            content.textContent = "";
                         } else if (axie.stage > 3) {
                             statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
-                            let cls = anc.firstElementChild.children[2].children[2].children[0];
-                            if (cls) {
-                                content.className = cls.classList[1];
-                            }
                         }
                         //prevent
-                        if ((anc.firstElementChild.children[2].children[2].childElementCount == 1 && axie.stage != 3) || (axie.stage == 3 && anc.firstElementChild.children[2].children[2].childElementCount == 0)) {
+                        if ((card.childElementCount == 5)) {
                             let traits = genGenesDiv(axie, statsDiv);
                             content.appendChild(statsDiv);
                             content.appendChild(traits);
-                            anc.firstElementChild.children[2].children[2].append(content);
+                            insertAfter(content, card.children[2]);
                             //remove part's box margin to prevent overlap with price
-                            anc.firstElementChild.children[3].style["margin-top"] = "0px";
-
-                            //reduce canvas size
-                            let h = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.height);
-                            let w = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.width);
-                            anc.firstElementChild.children[4].firstElementChild.children[1].style.height = (h * 0.9).toFixed(2) + "px";
-                            anc.firstElementChild.children[4].firstElementChild.children[1].style.width = (w * 0.9).toFixed(2) + "px";
+                            content.style["margin-top"] = "0px";
+                            card.style["position"] = "relative";    //will this mess shit up?
                         }
                     }
-                    /*
-                    if (options[REPLACE_ANIMATION_OPTION]) {
-                        //replace animation with static image
-                        let img = document.createElement("img");
-                        img.src = axie.figure.static.idle;
-                        img.width = "200";
-                        anc.firstElementChild.children[4].firstElementChild.children[1].replaceWith(img);
-                    }
-                    */
                 }
-            }).catch((e) => {
-                console.log("ERROR: " + e);
-                console.log(e.stack);
-            });
+            } else {
+                getAxieInfo(axieId).then(axie => {
+                    if (axie.stage > 3) {
+                        if (options[SHOW_PENDING_EXP_OPTION]) {
+                            getTruePendingExp(axie).then(axie => {
+                                if (!anc.firstElementChild.children[2].children[2].children[0].textContent.includes(" + ")) {
+                                    anc.firstElementChild.children[2].children[2].children[0].textContent += " + " + axie.truePending;
+                                }
+                            });
+                        }
+                    }
+                    if (axie.stage > 2) {
+                        if (options[SHOW_BREEDS_STATS_OPTION]) {
+                            dbg = anc;
+                            let content = document.createElement("div");
+                            let statsDiv = document.createElement("div");
+                            let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + Math.round(axie.quality * 100) + "%";
+                            if (axie.stage == 3) {
+                                statsDiv.textContent = stats;
+                                let extraDiv = document.createElement("div");
+                                anc.firstElementChild.children[2].append(extraDiv);
+                                //Hack. Hardcoded values taken from adult card. Will not dymanically update if AI change their styles.
+                                content.style["font-size"] = "12px";
+                                content.style["color"] = "rgb(96, 96, 96)";
+                                content.style["padding"] = "2px 0px";
+                                content.style["border-radius"] = "8px";
+
+                            } else if (axie.stage > 3) {
+                                statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
+                                let cls = anc.firstElementChild.children[2].children[2].children[0];
+                                if (cls) {
+                                    content.className = cls.classList[1];
+                                }
+                            }
+                            //prevent
+                            if ((anc.firstElementChild.children[2].children[2].childElementCount == 1 && axie.stage != 3) || (axie.stage == 3 && anc.firstElementChild.children[2].children[2].childElementCount == 0)) {
+                                let traits = genGenesDiv(axie, statsDiv);
+                                content.appendChild(statsDiv);
+                                content.appendChild(traits);
+                                anc.firstElementChild.children[2].children[2].append(content);
+                                //remove part's box margin to prevent overlap with price
+                                anc.firstElementChild.children[3].style["margin-top"] = "0px";
+
+                                //reduce canvas size
+                                let h = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.height);
+                                let w = parseFloat(anc.firstElementChild.children[4].firstElementChild.children[1].style.width);
+                                anc.firstElementChild.children[4].firstElementChild.children[1].style.height = (h * 0.9).toFixed(2) + "px";
+                                anc.firstElementChild.children[4].firstElementChild.children[1].style.width = (w * 0.9).toFixed(2) + "px";
+                            }
+                        }
+                        /*
+                        if (options[REPLACE_ANIMATION_OPTION]) {
+                            //replace animation with static image
+                            let img = document.createElement("img");
+                            img.src = axie.figure.static.idle;
+                            img.width = "200";
+                            anc.firstElementChild.children[4].firstElementChild.children[1].replaceWith(img);
+                        }
+                        */
+                    }
+                }).catch((e) => {
+                    console.log("ERROR: " + e);
+                    console.log(e.stack);
+                });
+            }
         }
     } catch (e) {
         console.log("ERROR: " + e);

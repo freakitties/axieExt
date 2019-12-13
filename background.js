@@ -46,11 +46,26 @@ function getCheckpoint(id, sendResponse) {
     }
 }
 
+function getAxieInfoMarket(id, sendResponse) {
+    fetch("https://axieinfinity.com/graphql-server/graphql", {"headers":{"content-type":"application/json"},"body":"{\"operationName\":\"GetAxieDetail\",\"variables\":{\"axieId\":\"" + parseInt(id) + "\"},\"query\":\"query GetAxieDetail($axieId: ID!) {\\n  axie(axieId: $axieId) {\\n    ...AxieDetail\\n    __typename\\n  }\\n}\\n\\nfragment AxieDetail on Axie {\\n  id\\n  name\\n  genes\\n  owner\\n  birthDate\\n  bodyShape\\n  class\\n  sireId\\n  sireClass\\n  matronId\\n  matronClass\\n  stage\\n  title\\n  breedCount\\n  breedable\\n  exp\\n  level\\n  unlocked\\n  figure {\\n    atlas\\n    model\\n    image\\n    __typename\\n  }\\n  parts {\\n    ...AxiePart\\n    __typename\\n  }\\n  stats {\\n    ...AxieStats\\n    __typename\\n  }\\n  battleInfo {\\n    ...AxieBattleInfo\\n    __typename\\n  }\\n  auction {\\n    ...AxieAuction\\n    __typename\\n  }\\n  ownerProfile {\\n    name\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment AxiePart on AxiePart {\\n  id\\n  name\\n  class\\n  type\\n  mystic\\n  bionic\\n  xmas\\n  stage\\n  moves {\\n    ...AxieMove\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment AxieMove on AxieMove {\\n  id\\n  name\\n  type\\n  attack\\n  defense\\n  accuracy\\n  stage\\n  effects {\\n    ...AxieMoveEffect\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment AxieMoveEffect on AxieMoveEffect {\\n  name\\n  type\\n  description\\n  __typename\\n}\\n\\nfragment AxieStats on AxieStats {\\n  hp\\n  speed\\n  skill\\n  morale\\n  __typename\\n}\\n\\nfragment AxieBattleInfo on AxieBattleInfo {\\n  activityPoint\\n  pendingExp\\n  expSignature\\n  __typename\\n}\\n\\nfragment AxieAuction on Auction {\\n  startingPrice\\n  endingPrice\\n  startingTimestamp\\n  endingTimestamp\\n  duration\\n  timeLeft\\n  currentPrice\\n  currentPriceUSD\\n  suggestedPrice\\n  seller\\n  listingIndex\\n  auctionType\\n  __typename\\n}\\n\"}","method":"POST"})
+    .then(response => {
+        response.json().then(result => {
+            let axie = result.data.axie;
+            axie.pendingExp = axie.battleInfo.pendingExp;
+            sendResponse(axie);
+        });
+    });
+}
+
+
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-console.log("Hello from background1");
     if (request.contentScriptQuery == "getCheckpoint") {
-console.log("Hello from background");
         getCheckpoint(request.axieId, sendResponse);
         return true;
     }
+    if (request.contentScriptQuery == "getAxieInfoMarket") {
+        getAxieInfoMarket(request.axieId, sendResponse);
+        return true;
+    }
+
 });
