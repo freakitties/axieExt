@@ -234,6 +234,7 @@ function checkStatus(res) {
     }
 }
 
+/*
 //Promisify getCheckpoint
 function getCheckpoint(id) {
     return new Promise((resolve, reject) => {
@@ -253,6 +254,7 @@ async function getTruePendingExp(axie) {
         return axie;
     }
 }
+*/
 
 async function getAxieInfo(id) {
     if (id in axies) {
@@ -271,15 +273,6 @@ async function getAxieInfo(id) {
         }
         return axies[id];
     }
-}
-
-//Promisify getCheckpoint
-function getCheckpoint(id) {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({contentScriptQuery: "getCheckpoint", axieId: id}, function(result) {
-            resolve(result.totalSynced);
-        });
-    });
 }
 
 function getAxieInfoMarket(id) {
@@ -364,7 +357,7 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
     } else {
         traits.style.background = "white";
         //traits.style.background = window.getComputedStyle(document.getRootNode().body, null).getPropertyValue("background-color");
-        traits.style.top = "-63px";
+        traits.style.top = "-90px";
         if (type == "list") {
             if (axie.stage == 3) {
                 traits.style.top = "-90px";
@@ -466,6 +459,7 @@ async function run() {
             if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
                 let axie = await getAxieInfoMarket(axieId);
                 let card = anc.firstElementChild.firstElementChild.firstElementChild;
+                /*
                 if (axie.stage > 3) {
                     if (options[SHOW_PENDING_EXP_OPTION]) {
                         getTruePendingExp(axie).then(axie => {
@@ -475,6 +469,7 @@ async function run() {
                         });
                     }
                 }
+                */
                 if (axie.stage > 2) {
                     if (options[SHOW_BREEDS_STATS_OPTION]) {
                         dbg = anc;
@@ -504,6 +499,7 @@ async function run() {
                 }
             } else {
                 getAxieInfo(axieId).then(axie => {
+                    /*
                     if (axie.stage > 3) {
                         if (options[SHOW_PENDING_EXP_OPTION]) {
                             getTruePendingExp(axie).then(axie => {
@@ -513,6 +509,7 @@ async function run() {
                             });
                         }
                     }
+                    */
                     if (axie.stage > 2) {
                         if (options[SHOW_BREEDS_STATS_OPTION]) {
                             dbg = anc;
@@ -531,13 +528,16 @@ async function run() {
 
                             } else if (axie.stage > 3) {
                                 statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
-                                let cls = anc.firstElementChild.children[2].children[2].children[0];
+                                content.style = "font-size: 12px; color: rgb(96, 96, 96); padding: 2px 0px; border-radius: 8px;";
+
+                                let cls = anc.firstElementChild.children[2].children[2];//.children[0];
                                 if (cls) {
                                     content.className = cls.classList[1];
                                 }
                             }
                             //prevent
-                            if ((anc.firstElementChild.children[2].children[2].childElementCount == 1 && axie.stage != 3) || (axie.stage == 3 && anc.firstElementChild.children[2].children[2].childElementCount == 0)) {
+                            //if ((anc.firstElementChild.children[2].children[2].childElementCount == 1 && axie.stage != 3) || (axie.stage == 3 && anc.firstElementChild.children[2].children[2].childElementCount == 0)) {
+                            if (anc.firstElementChild.children[2].children[2].childElementCount == 0) {
                                 let traits = genGenesDiv(axie, statsDiv);
                                 content.appendChild(statsDiv);
                                 content.appendChild(traits);
@@ -580,7 +580,7 @@ var options = {};
 //currently, the extension will keep running if the page was previously loaded while enabled...need to reload page to disable inflight extension.
 getOptions((response) => {
     options[ENABLE_OPTION] = response[ENABLE_OPTION];
-    options[SHOW_PENDING_EXP_OPTION] = response[SHOW_PENDING_EXP_OPTION];
+    //options[SHOW_PENDING_EXP_OPTION] = response[SHOW_PENDING_EXP_OPTION];
     options[SHOW_BREEDS_STATS_OPTION] = response[SHOW_BREEDS_STATS_OPTION];
     if (options[ENABLE_OPTION]) {
         init();
