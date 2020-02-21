@@ -266,7 +266,7 @@ async function getAxieInfo(id) {
         if (result_json.stage > 2) {
             axies[id].genes = genesToBin(BigInt(axies[id].genes));
             let traits = getTraits(axies[id].genes);
-            let qp = getQualityAndPureness(traits, axies[id].class);
+            let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
             axies[id].traits = traits;
             axies[id].quality = qp.quality;
             axies[id].pureness = qp.pureness;
@@ -285,7 +285,7 @@ function getAxieInfoMarket(id) {
                 if (result.stage > 2) {
                     axies[id].genes = genesToBin(BigInt(axies[id].genes));
                     let traits = getTraits(axies[id].genes);
-                    let qp = getQualityAndPureness(traits, axies[id].class);
+                    let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
                     axies[id].traits = traits;
                     axies[id].quality = qp.quality;
                     axies[id].pureness = qp.pureness;
@@ -456,7 +456,7 @@ async function run() {
             let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
 
             //keep these blocks separate...UI likely will change
-            if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
+            if (currentURL.startsWith("https://marketplace.axieinfinity.com/") && currentURL.lastIndexOf("view=ListView") == -1) {
                 let axie = await getAxieInfoMarket(axieId);
                 let card = anc.firstElementChild.firstElementChild.firstElementChild;
                 /*
@@ -473,24 +473,23 @@ async function run() {
                 if (axie.stage > 2) {
                     if (options[SHOW_BREEDS_STATS_OPTION]) {
                         dbg = anc;
-                        let content = document.createElement("small");
+                        let content = card.children[2];
                         let statsDiv = document.createElement("div");
                         let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + Math.round(axie.quality * 100) + "%";
                         content.className = card.children[2].className;
                         if (axie.stage == 3) {
                             statsDiv.textContent = stats;
-                            content = card.children[2];
                             content.className = content.className.replace("invisible", "visible");
                             content.textContent = "";
                         } else if (axie.stage > 3) {
+                            content.textContent = "";
                             statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
                         }
-                        //prevent
-                        if ((card.childElementCount == 5)) {
+                        //prevent dupes
+                        if ((content.childElementCount == 0)) {
                             let traits = genGenesDiv(axie, statsDiv);
                             content.appendChild(statsDiv);
                             content.appendChild(traits);
-                            insertAfter(content, card.children[2]);
                             //remove part's box margin to prevent overlap with price
                             content.style["margin-top"] = "0px";
                             card.style["position"] = "relative";    //will this mess shit up?
