@@ -66,11 +66,11 @@ async function init() {
         if (rescan) {
             if (window.location.href.includes("/axie/")) {
                 //console.log("Axie Breeder module detected. Rescanning.");
-                setTimeout(run, 1000);
+                setTimeout(run, 10000);
             } else {
                 console.log('New URI detected. Rescanning.');
                 currentURL = window.location.href;
-                setTimeout(run, 1000);
+                setTimeout(run, 10000);
             }
         }
     };
@@ -473,6 +473,10 @@ async function run() {
                 if (axie.stage > 2) {
                     if (options[SHOW_BREEDS_STATS_OPTION]) {
                         dbg = anc;
+                        if (!card.children || (card.children && card.children.length < 2)) {
+                            //igoring showing stats on children for now
+                            continue;
+                        }
                         let content = card.children[2];
                         let statsDiv = document.createElement("div");
                         let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + Math.round(axie.quality * 100) + "%";
@@ -564,6 +568,7 @@ async function run() {
                 }).catch((e) => {
                     console.log("ERROR: " + e);
                     console.log(e.stack);
+                    throw(e);
                 });
             }
         }
@@ -571,6 +576,7 @@ async function run() {
         console.log("ERROR: " + e);
         console.log(e.stack);
         console.log(dbg);
+        throw(e);
     }
 }
 
