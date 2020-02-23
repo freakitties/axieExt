@@ -66,11 +66,11 @@ async function init() {
         if (rescan) {
             if (window.location.href.includes("/axie/")) {
                 //console.log("Axie Breeder module detected. Rescanning.");
-                setTimeout(run, 10000);
+                setTimeout(run, 1000);
             } else {
                 console.log('New URI detected. Rescanning.');
                 currentURL = window.location.href;
-                setTimeout(run, 10000);
+                setTimeout(run, 1000);
             }
         }
     };
@@ -486,7 +486,12 @@ async function run() {
                             content.className = content.className.replace("invisible", "visible");
                             content.textContent = "";
                         } else if (axie.stage > 3) {
-                            content.textContent = "";
+                            content.childNodes.forEach(n => {
+                                if (n.nodeType == Node.TEXT_NODE) {
+                                    n.textContent = "";
+                                    //n.remove() doesn't work. probably because removing during iteration is not supported.
+                                }
+                            });
                             statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
                         }
                         //prevent dupes
