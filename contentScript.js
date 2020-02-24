@@ -35,11 +35,17 @@ async function init() {
     await getBodyParts();
 
     let callback = function(mutationsList, observer) {
-//console.log("list", mutationsList);
+console.log("list", mutationsList);
         if (window.location.href == currentURL && !window.location.href.includes("/axie/")) {
+            //fix Order By drop down z-index
+            if (mutationsList.length == 1 && mutationsList[0].target.children.length == 2 && mutationsList[0].target.children[1].children[0].nodeName == "UL") {
+                if (mutationsList[0].target.children[1].children[0].textContent.indexOf("Highest Price") != -1) {
+                    mutationsList[0].target.children[1].children[0].parentElement.style["zIndex"] = 99999;
+                }
+            }
             return;
         }
-//console.log("---");
+console.log("---");
         let rescan = false;
         let removed = false;
         let added = false;
