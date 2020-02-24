@@ -1,0 +1,1 @@
+This extension does not store or track any user data. The extension makes API calls to third parties like Axie Infinity's website to obtain data to display for enhanced visualization. The author of this extension does not have control over how user activity is tracked through those API calls.
