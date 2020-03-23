@@ -36,16 +36,17 @@ async function init() {
 
     let callback = function(mutationsList, observer) {
 //console.log("list", mutationsList);
-        if (window.location.href == currentURL && !window.location.href.includes("/axie/")) {
+        if (window.location.href == currentURL) {
             //fix Order By drop down z-index
             if (mutationsList.length == 1 && mutationsList[0].target.children.length == 2){
-
-                if ((mutationsList[0].target.children[1].children[0].nodeName == "UL" && mutationsList[0].target.children[1].children[0].textContent.indexOf("Highest Price") != -1)
-                    || mutationsList[0].target.children[1].className.includes("transition-opacity")) {
-                    mutationsList[0].target.children[1].style["zIndex"] = 99999;
+                var mutated = mutationsList[0];
+                if (mutated.target.children[1].children[0].nodeName == "UL" && mutated.target.children[1].children[0].textContent.indexOf("Highest Price") != -1) {
+                    mutated.target.children[1].style["zIndex"] = 99999;
+                } else if (mutated.target.children[1].className.includes("transition-opacity")) {
+                    mutated.target.children[1].style["zIndex"] = 99998;
                 }
             }
-            return;
+            //return;
         }
 //console.log("---");
         let rescan = false;
