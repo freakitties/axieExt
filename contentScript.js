@@ -493,7 +493,6 @@ async function run() {
                         if (axie.stage == 3) {
                             statsDiv.textContent = stats;
                             content.className = content.className.replace("invisible", "visible");
-                            content.textContent = "";
                         } else if (axie.stage > 3) {
                             content.childNodes.forEach(n => {
                                 if (n.nodeType == Node.TEXT_NODE) {
