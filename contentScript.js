@@ -269,6 +269,7 @@ async function getAxieInfo(id) {
     if (id in axies) {
         return axies[id];
     } else {
+        axies[id] = {}; //kind of mutex
         var result_json = await fetch('https://axieinfinity.com/api/v2/axies/' + id).then(res => res.json());
         axies[id] = result_json;
 
@@ -289,6 +290,7 @@ function getAxieInfoMarket(id) {
         if (id in axies) {
             resolve(axies[id]);
         } else {
+            axies[id] = {}; //kind of mutex
             chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
                 axies[id] = result;
                 if (result.stage > 2) {
@@ -463,6 +465,7 @@ async function run() {
             let anc = axieAnchors[i];
             let div = anc.firstElementChild;
             let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
+            if (axieId in axies) continue;
 
             //keep these blocks separate...UI likely will change
             if (currentURL.startsWith("https://marketplace.axieinfinity.com/") && currentURL.lastIndexOf("view=ListView") == -1) {
