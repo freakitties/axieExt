@@ -29,13 +29,14 @@ const MAX_QUALITY = 6 * (PROBABILITIES.d + PROBABILITIES.r1 + PROBABILITIES.r2);
 
 var currentURL = window.location.href;
 var axies = {};
+var rescanning = false;
 
 async function init() {
 
     await getBodyParts();
 
     let callback = function(mutationsList, observer) {
-//console.log("list", mutationsList);
+console.log("list", mutationsList);
         if (window.location.href == currentURL) {
             //fix Order By drop down z-index
             if (mutationsList.length == 1 && mutationsList[0].target.children.length == 2){
@@ -72,7 +73,8 @@ async function init() {
             rescan = true;
             currentURL = window.location.href;
         }
-        if (rescan) {
+        if (rescan && !rescanning) {
+            rescanning = true;
             if (window.location.href.includes("/axie/")) {
                 //console.log("Axie Breeder module detected. Rescanning.");
                 setTimeout(run, 1000);
@@ -393,83 +395,87 @@ function insertAfter(newNode, referenceNode) {
 
 var initObserver = true;
 async function run() {
-    let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
-//console.log(axieAnchors.length, intID);
-    if (axieAnchors.length > 0 && observer != null) {
-        clearInterval(intID);
-        intID = -1;
-    } else {
-        return;
-    }
-//console.log("running");
-    if (initObserver) {
-        let targetNode = axieAnchors[0].parentElement;
-        if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
-            //targetNode = targetNode.parentElement;
-            targetNode = document.body;
-        }
-        observer.observe(targetNode, observerConfig);
-        initObserver = false;
-
-        if (window.location.href.includes("/axie/")) {
-            let breedButton = document.evaluate("//span[text()='Breed' or text()='繁殖']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            //if (breedButton && getComputedStyle(breedButton.parentNode.parentNode).backgroundColor != "rgb(203, 203, 203)") {
-            if (breedButton) {
-//console.log("observing breed button ", getComputedStyle(breedButton.parentNode.parentNode).backgroundColor, breedButton);
-                //find the X button in the breeder window
-                let xpath = "//svg:path[@d='M2 12L12 2M12 12L2 2']";
-                let pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                let breedTarget = pathNode.parentNode.parentNode.parentNode.parentNode;
-                observer.observe(breedTarget, observerConfig);
-            } else {
-//console.log("ignoring breed");
-            }
-        }
-    }
-
-    let onAxieDetailsPage = false;
-    if (currentURL.startsWith("https://axieinfinity.com/axie/") || currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
-        let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
-        let axie;
-        if (currentURL.startsWith("https://axieinfinity.com/axie/")){
-            axie = await getAxieInfo(axieId);
-        } else if (currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
-            axie = await getAxieInfoMarket(axieId);
-        }
-
-        if (axie.stage > 2) {
-            let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
-            let pathNode;
-            let detailsNode;
-            if (currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
-                //this will break when localization is implemented on the site
-                xpath = "//div[text()='Stats']";
-                pathNode = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                detailsNode = pathNode;
-            } else {
-                pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                detailsNode =  pathNode.parentNode.parentNode.parentNode.parentNode;
-            }
-            let traits = genGenesDiv(axie, detailsNode, "details");
-            if (detailsNode.childElementCount == 0 && currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
-                detailsNode.appendChild(traits);
-            } else if (!currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
-                detailsNode.appendChild(traits);
-            }
-        }
-    }
-
     let dbg;
     try {
+        let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
+    //console.log(axieAnchors.length, intID);
+        if (axieAnchors.length > 0 && observer != null) {
+            clearInterval(intID);
+            intID = -1;
+        } else {
+            return;
+        }
+    //console.log("running");
+        if (initObserver) {
+            let targetNode = axieAnchors[0].parentElement;
+            if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
+                //targetNode = targetNode.parentElement;
+                targetNode = document.body;
+            }
+            observer.observe(targetNode, observerConfig);
+            initObserver = false;
+
+            if (window.location.href.includes("/axie/")) {
+                let breedButton = document.evaluate("//span[text()='Breed' or text()='繁殖']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                //if (breedButton && getComputedStyle(breedButton.parentNode.parentNode).backgroundColor != "rgb(203, 203, 203)") {
+                if (breedButton) {
+    //console.log("observing breed button ", getComputedStyle(breedButton.parentNode.parentNode).backgroundColor, breedButton);
+                    //find the X button in the breeder window
+                    let xpath = "//svg:path[@d='M2 12L12 2M12 12L2 2']";
+                    let pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    let breedTarget = pathNode.parentNode.parentNode.parentNode.parentNode;
+                    observer.observe(breedTarget, observerConfig);
+                } else {
+    //console.log("ignoring breed");
+                }
+            }
+        }
+
+        let onAxieDetailsPage = false;
+        if (currentURL.startsWith("https://axieinfinity.com/axie/") || currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+            let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
+            let axie;
+            if (currentURL.startsWith("https://axieinfinity.com/axie/")){
+                axie = await getAxieInfo(axieId);
+            } else if (currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+                axie = await getAxieInfoMarket(axieId);
+            }
+
+            if (axie.stage > 2) {
+                let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
+                let pathNode;
+                let detailsNode;
+                if (currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+                    //this will break when localization is implemented on the site
+                    xpath = "//div[text()='Stats']";
+                    pathNode = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    detailsNode = pathNode;
+                } else {
+                    pathNode = document.evaluate(xpath, document, function(prefix) { if (prefix === 'svg') { return 'http://www.w3.org/2000/svg'; }}, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    detailsNode =  pathNode.parentNode.parentNode.parentNode.parentNode;
+                }
+                let traits = genGenesDiv(axie, detailsNode, "details");
+                if (detailsNode.childElementCount == 0 && currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+                    detailsNode.appendChild(traits);
+                } else if (!currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+                    detailsNode.appendChild(traits);
+                }
+            }
+        }
+
         for (let i = 0; i < axieAnchors.length; i++) {
             let anc = axieAnchors[i];
             let div = anc.firstElementChild;
             let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
-            if (axieId in axies) continue;
 
             //keep these blocks separate...UI likely will change
             if (currentURL.startsWith("https://marketplace.axieinfinity.com/") && currentURL.lastIndexOf("view=ListView") == -1) {
-                let axie = await getAxieInfoMarket(axieId);
+                let axie;
+                if (!(axieId in axies)) {
+                    axie = await getAxieInfoMarket(axieId);
+                } else {
+                    axie = axies[axieId];
+                }
                 let card = anc.firstElementChild.firstElementChild.firstElementChild;
                 /*
                 if (axie.stage > 3) {
@@ -593,6 +599,8 @@ async function run() {
         console.log(e.stack);
         console.log(dbg);
         throw(e);
+    } finally {
+        rescanning = false;
     }
 }
 
