@@ -36,7 +36,7 @@ async function init() {
     await getBodyParts();
 
     let callback = function(mutationsList, observer) {
-console.log("list", mutationsList);
+//console.log("list", mutationsList);
         if (window.location.href == currentURL) {
             //fix Order By drop down z-index
             if (mutationsList.length == 1 && mutationsList[0].target.children.length == 2){
