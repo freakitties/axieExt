@@ -58,6 +58,9 @@ function getAxieInfoMarket(id, sendResponse) {
             //axie.pendingExp = axie.battleInfo.pendingExp;
             sendResponse(axie);
         });
+    })
+    .catch(error => {
+        console.log(error);
     });
 }
 
