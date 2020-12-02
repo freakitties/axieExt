@@ -1,5 +1,5 @@
 
-const optionsMapping = {enableOption: ENABLE_OPTION, /*showPendingExp: SHOW_PENDING_EXP_OPTION,*/ showBreedsStats: SHOW_BREEDS_STATS_OPTION};
+const optionsMapping = {enableOption: ENABLE_OPTION, showBreedsStats: SHOW_BREEDS_STATS_OPTION};
 $(document).ready(function(){
     let options = Object.keys(optionsMapping);
     getOptions(function(response) {
