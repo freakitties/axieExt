@@ -25,7 +25,7 @@
     },
     "content_scripts": [
         {
-            "matches": ["https://marketplace.axieinfinity.com/axie", "https://marketplace.axieinfinity.com/axie/*", "https://marketplace.axieinfinity.com/profile/inventory/axie*", "https://marketplace.axieinfinity.com/profile/0x*"],
+            "matches": ["https://marketplace.axieinfinity.com/*"],
             "js": ["options.js", "traitmapping.js", "contentScript.js"]
         }
     ],

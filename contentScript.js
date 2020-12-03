@@ -35,11 +35,15 @@ var currentURL = window.location.href;
 var axies = {};
 var initObserver = true;
 
-var debug = false;
+var debug = true;
 
-function debugLog(msg) {
-    if (debug)
-        console.log(msg);
+function debugLog(msg, ...extra) {
+    if (debug) {
+        if (extra.length > 0)
+            console.log(msg, extra);
+        else
+            console.log(msg);
+    }
 }
 
 function loadComplete(mutationsList) {
@@ -47,24 +51,29 @@ function loadComplete(mutationsList) {
 
         for (let j=0; j < mutationsList[i].removedNodes.length; j++) {
             //if the spinning puff is removed then we are loaded
-            if (mutationsList[i].removedNodes[j].innerHTML.includes("puff-loading.png")) {
+            if ("innerHTML" in mutationsList[i].removedNodes[j] && mutationsList[i].removedNodes[j].innerHTML.includes("puff-loading.png")) {
+                debugLog("loadComplete true", mutationsList[i].removedNodes[j]);
                 return true;
             }
         }
 
         for (let j=0; j < mutationsList[i].addedNodes.length; j++) {
-            if (mutationsList[i].addedNodes[j].innerHTML.includes("<div class=\"axie-card\">")) {
+            if ("innerHTML" in mutationsList[i].addedNodes[j] && mutationsList[i].addedNodes[j].innerHTML.includes("<div class=\"axie-card\">") || (mutationsList[i].addedNodes[j].nodeName == "SPAN" && mutationsList[i].addedNodes[j].innerText.match(/\d+ Axies$/))) {
+                debugLog("loadComplete true", mutationsList[i].addedNodes[j]);
                 return true;
             }
         }
     }
+    debugLog("loadComplete false");
     return false;
 }
 
 async function init() {
+    debugLog("init");
     await getBodyParts();
 
     /*
+    supported pages
     https://marketplace.axieinfinity.com/profile/inventory/axie(?page=N)
     https://marketplace.axieinfinity.com/profile/[ADDRESS]/axie(?page=N)
     https://marketplace.axieinfinity.com/axie
@@ -72,9 +81,10 @@ async function init() {
     */
 
     let callback = function(mutationsList, observer) {
-debugLog("list", mutationsList);
+debugLog("mutationsList", mutationsList);
 
-        if (!window.location.href.startsWith("https://marketplace.axieinfinity.com/profile/") && !window.location.href.startsWith("https://marketplace.axieinfinity.com/axie")) {
+        //ignore if not a supported page
+        if (!window.location.href.match(/https:\/\/marketplace\.axieinfinity\.com\/profile\/(inventory|0x\w+)\/axie/) && !window.location.href.startsWith("https://marketplace.axieinfinity.com/axie")) {
             debugLog("ignoring");
             return;
         }
@@ -90,26 +100,18 @@ debugLog("list", mutationsList);
                 }
             }
 
-        } else if (window.location.href != currentURL) {
-            let doRun = false;
-            //not details page
-            if (!window.location.href.startsWith("https://marketplace.axieinfinity.com/axie/")) {
-                if (loadComplete(mutationsList)) {
-                    doRun = true;
-                }
-            } else {
-                doRun = true;
+        }
+        if (window.location.href != currentURL) {
+            currentURL = window.location.href;
+            debugLog('New URI detected.');
+        }
+        //Only call run() if we find certain conditions in the mutation list
+        if(loadComplete(mutationsList)) {
+            //if you browses quickly, run() won't clearInterval before the page is ready
+            if (intID != -1) {
+                clearInterval(intID);
             }
-
-            if (doRun) {
-                currentURL = window.location.href;
-                debugLog('New URI detected. Rescanning.');
-                //if you browses quickly, run() won't clearInterval before the page is ready
-                if (intID != -1) {
-                    clearInterval(intID);
-                }
-                intID = setInterval(run, 1000);
-            }
+            intID = setInterval(run, 1000);
         }
     };
     observer = new MutationObserver(callback);
@@ -310,7 +312,7 @@ function getQueryParameters(name) {
 }
 
 function getAxieInfoMarket(id) {
-    debugLog("getAxieInfoMarket");
+    debugLog("getAxieInfoMarket", id);
     return new Promise((resolve, reject) => {
         if (id in axies) {
             resolve(axies[id]);
@@ -368,7 +370,7 @@ debugLog("Account: " + address);
         let option = SEARCH_PARAMS[sIdx];
         let opts = getQueryParameters(option);
         if (opts.length > 0) {
-            if ("region" == opts[0]) {
+            if ("region" == option) {
                 criteria.region = opts[0];
                 continue;
             }
@@ -380,7 +382,7 @@ debugLog("Account: " + address);
             } else {
                 for (let i=0; i < opts.length; i++) {
                     if ("title" == option) {
-                        opt.push(opts[i].replace("-", " "));
+                        opt.push(opts[i].replace(/-/g, " "));
                     } else {
                         opt.push(opts[i]);
                     }
@@ -500,9 +502,11 @@ function insertAfter(newNode, referenceNode) {
 }
 
 async function run() {
+    debugLog("run");
     let dbg;
     try {
         let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
+debugLog(axieAnchors);
         if (axieAnchors.length > 0 && observer != null) {
             clearInterval(intID);
             intID = -1;
@@ -519,14 +523,13 @@ debugLog("not ready");
         }
 debugLog(window.location.href);
         if (initObserver) {
-            let targetNode = axieAnchors[0].parentElement;
-            if (currentURL.startsWith("https://marketplace.axieinfinity.com/")) {
-                //targetNode = targetNode.parentElement;
-                targetNode = document.body;
-            }
+            let targetNode = document.body;
+
             observer.observe(targetNode, observerConfig);
             initObserver = false;
 
+/*
+TODO: add support for breeding window
             if (window.location.href.includes("/axie/")) {
                 let breedButton = document.evaluate("//span[text()='Breed' or text()='繁殖']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 //if (breedButton && getComputedStyle(breedButton.parentNode.parentNode).backgroundColor != "rgb(203, 203, 203)") {
@@ -541,10 +544,11 @@ debugLog(window.location.href);
     //debugLog("ignoring breed");
                 }
             }
+*/
         }
 
-        //single axie (axieDetail page)
-        if (currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
+        //single axie (axieDetail page). Added mouseover handler to Stats text
+        if (currentURL.match(/https:\/\/marketplace\.axieinfinity\.com\/axie\/\d+/)) {
             let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
             let axie;
             axie = await getAxieInfoMarket(axieId);
@@ -564,7 +568,13 @@ debugLog(window.location.href);
                     detailsNode.appendChild(traits);
                 }
             }
-        } else {
+        }
+        // else {
+
+
+        //Poll getAxieBriefList if we are on a profile listing page or market listing page, but not axieDetails or ListView
+        if ( (currentURL.match(/https:\/\/marketplace\.axieinfinity\.com\/(profile|axie)/) && !currentURL.match(/\/axie\/\d+/))
+                 && currentURL.lastIndexOf("view=ListView") == -1) {
 
             let pageAxies = [];
             for (let i = 0; i < axieAnchors.length; i++) {
@@ -579,52 +589,55 @@ debugLog(axies);
                     break;
                 }
             }
+        }
+
+        //limit to listing pages and details page, but not in ListView
+        if ( (currentURL.startsWith("https://marketplace.axieinfinity.com/profile/") || currentURL.startsWith("https://marketplace.axieinfinity.com/axie"))
+                 && currentURL.lastIndexOf("view=ListView") == -1) {
 
             for (let i = 0; i < axieAnchors.length; i++) {
                 let anc = axieAnchors[i];
                 let div = anc.firstElementChild;
                 let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
 
-                if (currentURL.startsWith("https://marketplace.axieinfinity.com/") && currentURL.lastIndexOf("view=ListView") == -1) {
-                    let axie;
-                    if (!(axieId in axies)) {
-                        axie = await getAxieInfoMarket(axieId);
-                    } else {
-                        axie = axies[axieId];
-                    }
-                    let card = anc.firstElementChild.firstElementChild.firstElementChild;
-                    if (axie.stage > 2) {
-                        if (options[SHOW_BREEDS_STATS_OPTION]) {
-                            dbg = anc;
-                            if (!card.children || (card.children && card.children.length < 2)) {
-                                //igoring showing stats on children for now
-                                continue;
-                            }
-                            let content = card.children[2];
-                            let statsDiv = document.createElement("div");
-                            let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + Math.round(axie.quality * 100) + "%";
-                            content.className = card.children[2].className;
-                            if (axie.stage == 3) {
-                                statsDiv.textContent = stats;
-                                content.className = content.className.replace("invisible", "visible");
-                            } else if (axie.stage > 3) {
-                                content.childNodes.forEach(n => {
-                                    if (n.nodeType == Node.TEXT_NODE) {
-                                        n.textContent = "";
-                                        //n.remove() doesn't work. probably because removing during iteration is not supported.
-                                    }
-                                });
-                                statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
-                            }
-                            //prevent dupes
-                            if ((content.childElementCount == 0)) {
-                                let traits = genGenesDiv(axie, statsDiv);
-                                content.appendChild(statsDiv);
-                                content.appendChild(traits);
-                                //remove part's box margin to prevent overlap with price
-                                content.style["margin-top"] = "0px";
-                                card.style["position"] = "relative";    //will this mess shit up?
-                            }
+                let axie;
+                if (!(axieId in axies)) {
+                    axie = await getAxieInfoMarket(axieId);
+                } else {
+                    axie = axies[axieId];
+                }
+                let card = anc.firstElementChild.firstElementChild.firstElementChild;
+                if (axie.stage > 2) {
+                    if (options[SHOW_BREEDS_STATS_OPTION]) {
+                        dbg = anc;
+                        if (!card.children || (card.children && card.children.length < 2)) {
+                            //igoring showing stats on children for now
+                            continue;
+                        }
+                        let content = card.children[2];
+                        let statsDiv = document.createElement("div");
+                        let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + Math.round(axie.quality * 100) + "%";
+                        content.className = card.children[2].className;
+                        if (axie.stage == 3) {
+                            statsDiv.textContent = stats;
+                            content.className = content.className.replace("invisible", "visible");
+                        } else if (axie.stage > 3) {
+                            content.childNodes.forEach(n => {
+                                if (n.nodeType == Node.TEXT_NODE) {
+                                    n.textContent = "";
+                                    //n.remove() doesn't work. probably because removing during iteration is not supported.
+                                }
+                            });
+                            statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
+                        }
+                        //prevent dupes
+                        if ((content.childElementCount == 0)) {
+                            let traits = genGenesDiv(axie, statsDiv);
+                            content.appendChild(statsDiv);
+                            content.appendChild(traits);
+                            //remove part's box margin to prevent overlap with price
+                            content.style["margin-top"] = "0px";
+                            card.style["position"] = "relative";    //will this mess shit up?
                         }
                     }
                 }
