@@ -35,7 +35,7 @@ var currentURL = window.location.href;
 var axies = {};
 var initObserver = true;
 
-var debug = true;
+var debug = false;
 
 function debugLog(msg, ...extra) {
     if (debug) {
