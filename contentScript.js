@@ -75,7 +75,8 @@ async function init() {
     /*
     supported pages
     https://marketplace.axieinfinity.com/profile/inventory/axie(?page=N)
-    https://marketplace.axieinfinity.com/profile/[ADDRESS]/axie(?page=N)
+    https://marketplace.axieinfinity.com/profile/0x[ADDRESS]/axie(?page=N) - metamask
+    https://marketplace.axieinfinity.com/profile/ronin:[ADDRESS]/axie(?page=N) - ronin
     https://marketplace.axieinfinity.com/axie
     https://marketplace.axieinfinity.com/axie/17469
     */
@@ -84,7 +85,7 @@ async function init() {
 debugLog("mutationsList", mutationsList);
 
         //ignore if not a supported page
-        if (!window.location.href.match(/https:\/\/marketplace\.axieinfinity\.com\/profile\/(inventory|0x\w+)\/axie/) && !window.location.href.startsWith("https://marketplace.axieinfinity.com/axie")) {
+        if (!(window.location.href.match(/https:\/\/marketplace\.axieinfinity\.com\/profile\/(inventory|0x\w+)\/axie/) || window.location.href.match(/https:\/\/marketplace\.axieinfinity\.com\/profile\/(inventory|ronin:\w+)\/axie/)) && !window.location.href.startsWith("https://marketplace.axieinfinity.com/axie")) {
             debugLog("ignoring");
             return;
         }
