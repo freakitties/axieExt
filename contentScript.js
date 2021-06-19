@@ -119,16 +119,16 @@ debugLog("mutationsList", mutationsList);
 
 var bodyPartsMap = {};
 async function getBodyParts() {
-    let parts = await fetch('https://axieinfinity.com/api/v2/body-parts').
-        then(res => res.json()).
-        catch(async (err) => {
+    //let parts = await fetch('https://axieinfinity.com/api/v2/body-parts').
+    //    then(res => res.json()).
+    //    catch(async (err) => {
             console.log("Failed to get body parts from the API");
             //API is unreliable. fall back to hard-coded local copy.
             let parts = await fetch(chrome.extension.getURL('body-parts.json')).then(res => res.json());
             for (let i in parts) {
                 bodyPartsMap[parts[i].partId] = parts[i];
             }
-        });
+    //    });
     for (let i in parts) {
         bodyPartsMap[parts[i].partId] = parts[i];
     }
@@ -319,8 +319,9 @@ function getAxieInfoMarket(id) {
         } else {
             axies[id] = {}; //kind of mutex
             chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
+			    console.log("From fetch: ", result);
                 axies[id] = result;
-                if (result.stage > 2) {
+                if (result && result["stage"] && result.stage > 2) {
                     axies[id].genes = genesToBin(BigInt(axies[id].genes));
                     let traits = getTraits(axies[id].genes);
                     let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
@@ -332,6 +333,27 @@ function getAxieInfoMarket(id) {
             });
         }
     });
+}
+
+function getAxieInfoMarketCB(id, cb) {
+    debugLog("getAxieInfoMarket", id);
+	if (id in axies) {
+		cb(axies[id]);
+	} else {
+		axies[id] = {}; //kind of mutex
+		chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
+			axies[id] = result;
+			if (result.stage > 2) {
+				axies[id].genes = genesToBin(BigInt(axies[id].genes));
+				let traits = getTraits(axies[id].genes);
+				let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
+				axies[id].traits = traits;
+				axies[id].quality = qp.quality;
+				axies[id].pureness = qp.pureness;
+			}
+			cb(result);
+		});
+	}
 }
 
 async function getAxieBriefList() {
@@ -402,15 +424,18 @@ debugLog("Account: " + address);
                 let axie = results[i];
                 let id = axie.id;
                 debugLog("got axie " + id);
-                axies[id] = axie;
-                if (axie.stage > 2) {
-                    axies[id].genes = genesToBin(BigInt(axies[id].genes));
-                    let traits = getTraits(axies[id].genes);
-                    let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
-                    axies[id].traits = traits;
-                    axies[id].quality = qp.quality;
-                    axies[id].pureness = qp.pureness;
-                }
+			  	if (!axies[id]) {
+                	axies[id] = axie;
+
+					if (axie.stage > 2) {
+						axies[id].genes = genesToBin(BigInt(axies[id].genes));
+						let traits = getTraits(axies[id].genes);
+						let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
+						axies[id].traits = traits;
+						axies[id].quality = qp.quality;
+						axies[id].pureness = qp.pureness;
+					}
+				}
             }
             resolve(results);
         });
@@ -501,6 +526,85 @@ function insertAfter(newNode, referenceNode) {
     referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
 }
 
+function renderCard(anc, axie) {
+  	if (!anc || !anc.firstElementChild || !anc.firstElementChild.firstElementChild) {
+	  return;
+	}
+
+	let card = anc.firstElementChild.firstElementChild.firstElementChild;
+    if (!axie) {
+	  return;
+	}
+
+	if (options[SHOW_BREEDS_STATS_OPTION]) {
+		dbg = anc;
+		if (!card.children || (card.children && card.children.length < 2)) {
+			//igoring showing stats on children for now
+			return;
+		}
+		let content = card.children[2];
+		let statsDiv = document.createElement("div");
+		let purity = Math.round(axie.quality * 100);
+		if (purity == 100) {
+		  let imgHolder = anc.querySelector(".img-placeholder");
+		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/XDZT.gif)";
+		}
+
+		let breedHolder = anc.getElementsByTagName("small");
+		breedCount = breedHolder[1].innerText;
+		breedCount = breedCount.replace(/.*:/,"") - 0;
+
+	  	let stats = "";
+	  	if (axie.stats && axie.stats.hp) {
+			stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + purity + "%";
+		}
+
+		content.className = card.children[2].className;
+		if (axie.stage == 3) {
+			statsDiv.textContent = stats;
+			content.className = content.className.replace("invisible", "visible");
+		} else if (axie.stage > 3) {
+			content.childNodes.forEach(n => {
+				if (n.nodeType == Node.TEXT_NODE) {
+					n.textContent = "";
+					//n.remove() doesn't work. probably because removing during iteration is not supported.
+				}
+			});
+			statsDiv.textContent = "🍆: " + breedCount + ", " + stats;
+		} else if (axie.stage < 3) {
+		  	birthTime = new Date((axie.birthDate * 1000) + (5*86400000));
+		    timeToBirth = birthTime.getTime() - new Date().getTime();
+			timeToHatch = (new Date((axie.birthDate * 1000) + (5*86400000)) + "").replace(/GMT.*/,"");
+			breedHolder[1].textContent = "Hatch: " + timeToHatch;
+		  	if (timeToBirth < 86400000) {
+			  	console.log(timeToBirth);
+			  	minutesToBirth = Math.floor(timeToBirth/1000/60);
+			    hoursToBirth = Math.floor(minutesToBirth / 60);
+			    if (minutesToBirth <= 60) {
+					breedHolder[1].textContent = "Minutes to hatch: " + minutesToBirth;
+				} else {
+					breedHolder[1].textContent = "Hours to hatch: " + hoursToBirth;
+				} 
+
+				let imgHolder = anc.querySelector(".img-placeholder");
+				imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/pngaaa.com-1654773.png)";
+			}
+			content.className = content.className.replace("invisible", "visible");
+		}
+
+		//prevent dupes
+		if (axie.stage > 2 && (content.childElementCount == 0)) {
+			let traits = genGenesDiv(axie, statsDiv);
+			content.appendChild(statsDiv);
+			content.appendChild(traits);
+			//remove part's box margin to prevent overlap with price
+			content.style["margin-top"] = "0px";
+			card.style["position"] = "relative";    //will this mess shit up?
+		}
+	}
+}
+
+let canUseCallback = false;
 async function run() {
     debugLog("run");
     let dbg;
@@ -560,6 +664,7 @@ TODO: add support for breeding window
                 //this will break when localization is implemented on the site
                 xpath = "//div[text()='Stats']";
                 pathNode = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+			  	console.log(pathNode);
                 detailsNode = pathNode;
                 let traits = genGenesDiv(axie, detailsNode, "details");
                 if (detailsNode.childElementCount == 0 && currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
@@ -584,7 +689,8 @@ TODO: add support for breeding window
                 if (!(axieId in axies)) {
                     //get all axies on the page and break
 debugLog("getting axies");
-                    var results = await getAxieBriefList();
+                    //var results = await getAxieBriefList();
+                    var results = await getAxieInfoMarket(axieId);
 debugLog(axies);
                     break;
                 }
@@ -597,50 +703,42 @@ debugLog(axies);
 
             for (let i = 0; i < axieAnchors.length; i++) {
                 let anc = axieAnchors[i];
-                let div = anc.firstElementChild;
                 let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
 
                 let axie;
                 if (!(axieId in axies)) {
+				  if (!canUseCallback) {
                     axie = await getAxieInfoMarket(axieId);
+					if (axie && axie.fromCache) {
+					  canUseCallback = true;
+					}
+					if (axie) {
+			  			renderCard(anc, axie);
+					} else {
+					  getAxieInfoMarketCB(axieId, ((anchor) => {
+						return (axie) => {
+						  if (!axie.fromCache) {
+							  canUseCallback = false;
+						  }
+						  renderCard(anchor, axie);
+						};
+					  })(anc));
+					}
+				  } else {
+					getAxieInfoMarketCB(axieId, ((anchor) => {
+					  return (axie) => {
+						if (!axie.fromCache) {
+					  		canUseCallback = false;
+						}
+						renderCard(anchor, axie);
+					  };
+					})(anc));
+				  }
                 } else {
                     axie = axies[axieId];
+			  		renderCard(anc, axie);
                 }
-                let card = anc.firstElementChild.firstElementChild.firstElementChild;
-                if (axie.stage > 2) {
-                    if (options[SHOW_BREEDS_STATS_OPTION]) {
-                        dbg = anc;
-                        if (!card.children || (card.children && card.children.length < 2)) {
-                            //igoring showing stats on children for now
-                            continue;
-                        }
-                        let content = card.children[2];
-                        let statsDiv = document.createElement("div");
-                        let stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + Math.round(axie.quality * 100) + "%";
-                        content.className = card.children[2].className;
-                        if (axie.stage == 3) {
-                            statsDiv.textContent = stats;
-                            content.className = content.className.replace("invisible", "visible");
-                        } else if (axie.stage > 3) {
-                            content.childNodes.forEach(n => {
-                                if (n.nodeType == Node.TEXT_NODE) {
-                                    n.textContent = "";
-                                    //n.remove() doesn't work. probably because removing during iteration is not supported.
-                                }
-                            });
-                            statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
-                        }
-                        //prevent dupes
-                        if ((content.childElementCount == 0)) {
-                            let traits = genGenesDiv(axie, statsDiv);
-                            content.appendChild(statsDiv);
-                            content.appendChild(traits);
-                            //remove part's box margin to prevent overlap with price
-                            content.style["margin-top"] = "0px";
-                            card.style["position"] = "relative";    //will this mess shit up?
-                        }
-                    }
-                }
+
             }
         }
     } catch (e) {

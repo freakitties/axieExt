@@ -1,5 +1,5 @@
 {
-    "name": "Freak's Axie Extension",
+    "name": "Explorer's Freak Extension",
     "version": "1.5.0",
     "description": "An extension to help play Axie Infinity.",
     "permissions": ["activeTab", "declarativeContent", "storage"],
