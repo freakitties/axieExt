@@ -8,7 +8,6 @@ To install:
 <img src="/readme_images/look4.png">
 <img src="/readme_images/look5.png">
 <img src="/readme_images/look6.png">
-<img src="/readme_images/look7.png">
 <img src="/readme_images/look8.png">
 <img src="/readme_images/look9.png">
 <img src="/readme_images/look10.png">
