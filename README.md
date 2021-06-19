@@ -1,1 +1,1 @@
-Freak's Axie Extension for Chrome (and compatible browsers)
+A small update to Freak's Axie Extension for Chrome (and compatible browsers) - that allows for a cache of the Axie data and a few usability elements.
