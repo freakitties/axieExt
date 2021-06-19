@@ -588,6 +588,10 @@ function renderCard(anc, axie) {
 
 				let imgHolder = anc.querySelector(".img-placeholder");
 				imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/pngaaa.com-1654773.png)";
+				imgHolder.style["background-position-x"] = "117px";
+				imgHolder.style["background-position-y"] = "68px";
+				imgHolder.style["background-size"] = "80%";
+				imgHolder.style["background-repeat"] = "no-repeat";
 			}
 			content.className = content.className.replace("invisible", "visible");
 		}
