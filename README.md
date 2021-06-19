@@ -12,4 +12,5 @@ To install:
 <img src="/readme_images/look9.png">
 <img src="/readme_images/look10.png">
 <img src="/readme_images/look11.png">
+IF YOU HAVE BOTH ACTIVE, THINGS WONT WORK RIGHT. MAKE SURE TO DISABLE THE STARTING ONE
 <img src="/readme_images/look12.png">
