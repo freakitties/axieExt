@@ -548,6 +548,10 @@ function renderCard(anc, axie) {
 		if (purity == 100) {
 		  let imgHolder = anc.querySelector(".img-placeholder");
 		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/XDZT.gif)";
+		  imgHolder.style["background-position-x"] = "112px";
+		  imgHolder.style["background-position-y"] = "75px";
+		  imgHolder.style["background-size"] = "70%";
+		  imgHolder.style["background-repeat"] = "no-repeat";
 		}
 
 		let breedHolder = anc.getElementsByTagName("small");
