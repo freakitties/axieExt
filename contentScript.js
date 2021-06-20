@@ -123,7 +123,7 @@ async function getBodyParts() {
     //let parts = await fetch('https://axieinfinity.com/api/v2/body-parts').
     //    then(res => res.json()).
     //    catch(async (err) => {
-            console.log("Failed to get body parts from the API");
+            //console.log("Failed to get body parts from the API");
             //API is unreliable. fall back to hard-coded local copy.
             let parts = await fetch(chrome.extension.getURL('body-parts.json')).then(res => res.json());
             for (let i in parts) {
@@ -320,7 +320,7 @@ function getAxieInfoMarket(id) {
         } else {
             axies[id] = {}; //kind of mutex
             chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
-			    console.log("From fetch: ", result);
+			    //console.log("From fetch: ", result);
                 axies[id] = result;
                 if (result && result["stage"] && result.stage > 2) {
                     axies[id].genes = genesToBin(BigInt(axies[id].genes));
@@ -620,7 +620,11 @@ function genMorphDiv(axie) {
 	morphDiv.style.paddingRight = "30px";
 	morphDiv.style.paddingTop = "3px";
 
-	let topBar = document.getElementsByClassName("fixed")[3];
+	let fixedBars = document.getElementsByClassName("fixed");
+	if (!fixedBars || fixedBars.length < 4)
+	  return;
+
+	let topBar = fixedBars[3];
 	topBar.insertBefore(morphDiv, topBar.firstChild);
 	
 	let button = document.createElement("button");
@@ -722,7 +726,7 @@ function renderCard(anc, axie) {
 			timeToHatch = (new Date((axie.birthDate * 1000) + (5*86400000)) + "").replace(/GMT.*/,"");
 			breedHolder[1].textContent = "Hatch: " + timeToHatch;
 		  	if (timeToBirth < 86400000) {
-			  	console.log(timeToBirth);
+			  	//console.log(timeToBirth);
 			  	minutesToBirth = Math.floor(timeToBirth/1000/60);
 			    hoursToBirth = Math.floor(minutesToBirth / 60);
 			    if (minutesToBirth <= 60) {
