@@ -561,6 +561,7 @@ function genUpdateDiv(axie) {
   let updateDiv = document.getElementById("updateButton");
   if (updateDiv == null) {
 	updateDiv = document.createElement("div");
+	updateDiv.id = "updateButton"
 	updateDiv.style.position = "absolute";
 	updateDiv.style.right = "0px";
 	updateDiv.style.margin = "5px";
@@ -751,10 +752,15 @@ function renderCard(anc, axie) {
 		    auctionHolder.style.textAlign="center";
 		  	auctionHolder.classList.add("auctionBucket");
 		    	
-		    timeLeft = ((axie.auction.endingTimestamp - axie.auction.startingTimestamp) / 60 / 60).toFixed(1);
+		    timeTotal = ((axie.auction.endingTimestamp - axie.auction.startingTimestamp) / 60 / 60).toFixed(1);
+		  	timeLeft = (((axie.auction.endingTimestamp * 1000) - new Date().getTime())/1000 /60 /60).toFixed(1);
+		    if (timeLeft < 0) {
+			  timeLeft = 0;
+			}
+
 		    startPrice = (axie.auction.startingPrice/1000000000000000000).toFixed(4);
 		    endingPrice = (axie.auction.endingPrice/1000000000000000000).toFixed(4);
-		    auctionHolder.textContent = startPrice + " > " + endingPrice + "; " + timeLeft + " hours";
+		    auctionHolder.textContent = startPrice + " > " + endingPrice + "; " + timeLeft + "/" + timeTotal +" hours";
 			parentNode = breedHolder[1].parentNode;
 		  	if (startPrice != endingPrice && parentNode.getElementsByClassName("auctionBucket").length == 0) {
 				parentNode.append(auctionHolder);
