@@ -600,6 +600,16 @@ function renderCard(anc, axie) {
 			content.className = content.className.replace("invisible", "visible");
 		}
 
+	  	if (axie.auction) {
+			let auctionHolder = breedHolder[1].cloneNode(true);
+		    auctionHolder.style.textAlign="center";
+			breedHolder[1].parentNode.append(auctionHolder);
+		    timeLeft = ((axie.auction.endingTimestamp - axie.auction.startingTimestamp) / 60 / 60).toFixed(1);
+		    startPrice = (axie.auction.startingPrice/100000000000000000).toFixed(4);
+		    endingPrice = (axie.auction.endingPrice/100000000000000000).toFixed(4);
+		    auctionHolder.textContent = startPrice + " -> " + endingPrice + "; " + timeLeft + " hours";
+		}
+
 		//prevent dupes
 		if (axie.stage > 2 && (content.childElementCount == 0)) {
 			let traits = genGenesDiv(axie, statsDiv);
