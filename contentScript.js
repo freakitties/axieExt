@@ -587,6 +587,7 @@ function genUpdateDiv(axie) {
 	  "hover:bg-primary-3",
 	  "active:bg-primary-5",
 	);
+	button.title = "Founder's cache out of date on this axie?  Click this to force a refresh.";
 	button.style.opacity = ".4";
 	updateDiv.appendChild(button);
 
@@ -646,6 +647,8 @@ function genMorphDiv(axie) {
 	  "active:bg-primary-5",
 	);
 	morphDiv.appendChild(button);
+	button.title="Click this button to open morphable eggs in tabs.";
+	button.style.opacity = ".5";
 
 	let span = document.createElement("span");
 	span.classList.add("visible");
