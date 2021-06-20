@@ -57,6 +57,30 @@ function getAxieInfoMarket(id, sendResponse) {
     });
 }
 
+function invalidateAxieInfoMarket(id, sendResponse) {
+  fetch("https://1s9wo04jw3.execute-api.us-east-1.amazonaws.com/prod/invalidateaxie/" + parseInt(id), {"headers":{"content-type":"application/json"},"method":"GET"})
+  	.then(response => {
+        response.json().then(result => {
+		    console.log("Axie service result: ", result);
+			if (!result) {
+			  throw "Bad axie service result.";
+			}
+            let axie = result;
+            //axie.pendingExp = axie.battleInfo.pendingExp;
+            sendResponse(axie);
+        }).catch(error => {
+		  console.log(error);
+		  console.log("Trying again in one second...");
+		  setTimeout(() => { invalidateAxieInfoMarket(id, sendResponse); }, 1300);
+		});
+    })
+    .catch(error => {
+        console.log(error);
+	    console.log("Trying again in one second...");
+	  	setTimeout(() => { invalidateAxieInfoMarket(id, sendResponse); }, 1300);
+    });
+}
+
 function getAxieBriefList(address, page, sort, auctionType, criteria, sendResponse) {
     //Assume we are at 24 axies per page
     if (page < 1) page = 1;
@@ -84,6 +108,10 @@ function getAxieBriefList(address, page, sort, auctionType, criteria, sendRespon
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.contentScriptQuery == "getAxieInfoMarket") {
         getAxieInfoMarket(request.axieId, sendResponse);
+        return true;
+    }
+    if (request.contentScriptQuery == "invalidateAxieInfoMarket") {
+        invalidateAxieInfoMarket(request.axieId, sendResponse);
         return true;
     }
     if (request.contentScriptQuery == "getAxieBriefList") {

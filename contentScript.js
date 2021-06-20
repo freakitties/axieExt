@@ -336,6 +336,24 @@ function getAxieInfoMarket(id) {
     });
 }
 
+function invalidateAxieInfoMarketCB(id, cb) {
+    debugLog("invalidateAxieInfoMarket", id);
+	axies[id] = {}; //kind of mutex
+	chrome.runtime.sendMessage({contentScriptQuery: "invalidateAxieInfoMarket", axieId: id}, function(result) {
+		console.log("From fetch: ", result);
+		axies[id] = result;
+		if (result && result["stage"] && result.stage > 2) {
+			axies[id].genes = genesToBin(BigInt(axies[id].genes));
+			let traits = getTraits(axies[id].genes);
+			let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
+			axies[id].traits = traits;
+			axies[id].quality = qp.quality;
+			axies[id].pureness = qp.pureness;
+		}
+		cb(result);
+	});
+}
+
 function getAxieInfoMarketCB(id, cb) {
     debugLog("getAxieInfoMarket", id);
 	if (id in axies) {
@@ -532,6 +550,65 @@ function clearMorphDiv() {
   }
 }
 
+function clearUpdateDiv() {
+  let m = document.getElementById("updateButton");
+  if (m) {
+  	m.remove();
+  }
+}
+
+function genUpdateDiv(axie) {
+  let updateDiv = document.getElementById("updateButton");
+  if (updateDiv == null) {
+	updateDiv = document.createElement("div");
+	updateDiv.style.position = "absolute";
+	updateDiv.style.right = "0px";
+	updateDiv.style.margin = "5px";
+	updateDiv.style.paddingRight = "30px";
+	updateDiv.style.paddingTop = "3px";
+
+	let topBar = document.getElementsByClassName("fixed")[3];
+	topBar.insertBefore(updateDiv, topBar.firstChild);
+	
+	let button = document.createElement("button");
+	button.classList.add( "px-20",
+	  "py-8",
+	  "relative",
+	  "rounded",
+	  "transition",
+	  "focus:outline-none",
+	  "border",
+	  "text-white",
+	  "border-primary-4",
+	  "hover:border-primary-3",
+	  "active:border-primary-5",
+	  "bg-primary-4",
+	  "hover:bg-primary-3",
+	  "active:bg-primary-5",
+	);
+	updateDiv.appendChild(button);
+
+	let span = document.createElement("span");
+	span.classList.add("visible");
+	button.appendChild(span);
+
+	let div = document.createElement("div");
+	div.classList.add("flex", "items-center");
+	span.appendChild(div);
+
+	let textDiv = document.createElement("div");
+	textDiv.textContent = "Update Founder's Cache";
+	div.appendChild(textDiv);
+
+	button.addEventListener("click", () => {
+		textDiv.textContent = "Working...";
+		invalidateAxieInfoMarketCB(axie.id, () => {
+			textDiv.textContent = "Updated!";
+		});
+	});
+  }
+}
+
 function genMorphDiv(axie) {
   let morphDiv = document.getElementById("morphinButton");
   if (morphDiv == null) {
@@ -673,7 +750,7 @@ function renderCard(anc, axie) {
 			let auctionHolder = breedHolder[1].cloneNode(true);
 		    auctionHolder.style.textAlign="center";
 		  	auctionHolder.classList.add("auctionBucket");
-		  	
+		    	
 		    timeLeft = ((axie.auction.endingTimestamp - axie.auction.startingTimestamp) / 60 / 60).toFixed(1);
 		    startPrice = (axie.auction.startingPrice/1000000000000000000).toFixed(4);
 		    endingPrice = (axie.auction.endingPrice/1000000000000000000).toFixed(4);
@@ -750,6 +827,7 @@ TODO: add support for breeding window
             let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
             let axie;
             axie = await getAxieInfoMarket(axieId);
+		  	genUpdateDiv(axie, () => {console.log("updated...");});
 
             if (axie.stage > 2) {
                 let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
