@@ -103,6 +103,7 @@ debugLog("mutationsList", mutationsList);
         }
         if (window.location.href != currentURL) {
             currentURL = window.location.href;
+		    clearMorphDiv();
             debugLog('New URI detected.');
         }
         //Only call run() if we find certain conditions in the mutation list
@@ -522,6 +523,68 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
     return traits;
 }
 
+let readyToMorph = [];
+function clearMorphDiv() {
+  readyToMorph = [];
+  let m = document.getElementById("morphinButton");
+  if (m) {
+  	m.remove();
+  }
+}
+
+function genMorphDiv(axie) {
+  let morphDiv = document.getElementById("morphinButton");
+  if (morphDiv == null) {
+	morphDiv = document.createElement("div");
+	morphDiv.style.position = "absolute";
+	morphDiv.style.right = "0px";
+	morphDiv.style.margin = "5px";
+	morphDiv.style.paddingRight = "30px";
+	morphDiv.style.paddingTop = "3px";
+
+	let topBar = document.getElementsByClassName("fixed")[3];
+	topBar.insertBefore(morphDiv, topBar.firstChild);
+	
+	let button = document.createElement("button");
+	button.classList.add( "px-20",
+	  "py-8",
+	  "relative",
+	  "rounded",
+	  "transition",
+	  "focus:outline-none",
+	  "border",
+	  "text-white",
+	  "border-primary-4",
+	  "hover:border-primary-3",
+	  "active:border-primary-5",
+	  "bg-primary-4",
+	  "hover:bg-primary-3",
+	  "active:bg-primary-5",
+	);
+	morphDiv.appendChild(button);
+
+	let span = document.createElement("span");
+	span.classList.add("visible");
+	button.appendChild(span);
+
+	let div = document.createElement("div");
+	div.classList.add("flex", "items-center");
+	span.appendChild(div);
+
+	let textDiv = document.createElement("div");
+	textDiv.textContent = "Open Morphables";
+	div.appendChild(textDiv);
+
+	button.addEventListener("click", () => {
+	  for (let i = 0; i < readyToMorph.length; i++) {
+		window.open("https://marketplace.axieinfinity.com/axie/" + readyToMorph[i].id);
+	  }
+	});
+  }
+
+  readyToMorph.push(axie);
+}
+
 function insertAfter(newNode, referenceNode) {
     referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
 }
@@ -585,10 +648,16 @@ function renderCard(anc, axie) {
 			  	minutesToBirth = Math.floor(timeToBirth/1000/60);
 			    hoursToBirth = Math.floor(minutesToBirth / 60);
 			    if (minutesToBirth <= 60) {
-					breedHolder[1].textContent = "Minutes to hatch: " + minutesToBirth;
+			  		if (minutesToBirth < 0) {
+						breedHolder[1].textContent = "Ready to hatch!";
+					  	genMorphDiv(axie);
+					} else {
+						breedHolder[1].textContent = "Minutes to hatch: " + minutesToBirth;
+					}
 				} else {
 					breedHolder[1].textContent = "Hours to hatch: " + hoursToBirth;
 				} 
+
 
 				let imgHolder = anc.querySelector(".img-placeholder");
 				imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/pngaaa.com-1654773.png)";
@@ -605,7 +674,6 @@ function renderCard(anc, axie) {
 		    auctionHolder.style.textAlign="center";
 		  	auctionHolder.classList.add("auctionBucket");
 		  	
-
 		    timeLeft = ((axie.auction.endingTimestamp - axie.auction.startingTimestamp) / 60 / 60).toFixed(1);
 		    startPrice = (axie.auction.startingPrice/1000000000000000000).toFixed(4);
 		    endingPrice = (axie.auction.endingPrice/1000000000000000000).toFixed(4);
@@ -643,6 +711,7 @@ debugLog(axieAnchors);
 debugLog("run ready");
         } else {
             notReadyCount++;
+		    clearMorphDiv();
 debugLog("not ready");
             if (notReadyCount > MAX_RUN_RETRIES) {
                 clearInterval(intID);
