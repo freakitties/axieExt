@@ -603,11 +603,18 @@ function renderCard(anc, axie) {
 	  	if (axie.auction) {
 			let auctionHolder = breedHolder[1].cloneNode(true);
 		    auctionHolder.style.textAlign="center";
-			breedHolder[1].parentNode.append(auctionHolder);
+		  	auctionHolder.classList.add("auctionBucket");
+		  	
+
 		    timeLeft = ((axie.auction.endingTimestamp - axie.auction.startingTimestamp) / 60 / 60).toFixed(1);
 		    startPrice = (axie.auction.startingPrice/1000000000000000000).toFixed(4);
 		    endingPrice = (axie.auction.endingPrice/1000000000000000000).toFixed(4);
-		    auctionHolder.textContent = startPrice + " -> " + endingPrice + "; " + timeLeft + " hours";
+		    auctionHolder.textContent = startPrice + " > " + endingPrice + "; " + timeLeft + " hours";
+			parentNode = breedHolder[1].parentNode;
+		  	if (startPrice != endingPrice && parentNode.getElementsByClassName("auctionBucket").length == 0) {
+				parentNode.append(auctionHolder);
+				parentNode.style.paddingBottom = "2px";
+			}
 		}
 
 		//prevent dupes
