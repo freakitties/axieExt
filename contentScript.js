@@ -605,8 +605,8 @@ function renderCard(anc, axie) {
 		    auctionHolder.style.textAlign="center";
 			breedHolder[1].parentNode.append(auctionHolder);
 		    timeLeft = ((axie.auction.endingTimestamp - axie.auction.startingTimestamp) / 60 / 60).toFixed(1);
-		    startPrice = (axie.auction.startingPrice/100000000000000000).toFixed(4);
-		    endingPrice = (axie.auction.endingPrice/100000000000000000).toFixed(4);
+		    startPrice = (axie.auction.startingPrice/1000000000000000000).toFixed(4);
+		    endingPrice = (axie.auction.endingPrice/1000000000000000000).toFixed(4);
 		    auctionHolder.textContent = startPrice + " -> " + endingPrice + "; " + timeLeft + " hours";
 		}
 
