@@ -587,6 +587,7 @@ function genUpdateDiv(axie) {
 	  "hover:bg-primary-3",
 	  "active:bg-primary-5",
 	);
+	button.style.opacity = ".4";
 	updateDiv.appendChild(button);
 
 	let span = document.createElement("span");
@@ -598,13 +599,14 @@ function genUpdateDiv(axie) {
 	span.appendChild(div);
 
 	let textDiv = document.createElement("div");
-	textDiv.textContent = "Update Founder's Cache";
+	textDiv.textContent = "Recache";
 	div.appendChild(textDiv);
 
 	button.addEventListener("click", () => {
 		textDiv.textContent = "Working...";
 		invalidateAxieInfoMarketCB(axie.id, () => {
 			textDiv.textContent = "Updated!";
+		    setTimeout(clearUpdateDiv, 500);
 		});
 	});
   }
@@ -837,7 +839,14 @@ TODO: add support for breeding window
             let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
             let axie;
             axie = await getAxieInfoMarket(axieId);
-		  	genUpdateDiv(axie, () => {console.log("updated...");});
+
+			genUpdateDiv(axie);
+			let hasAuctionData = document.querySelectorAll(".items-center > div .text-center");
+		    if (!axie.auction && hasAuctionData && hasAuctionData.length > 0) {
+            	invalidateAxieInfoMarketCB(axie.id, () => {
+				  clearUpdateDiv();
+				});
+			} 
 
             if (axie.stage > 2) {
                 let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
