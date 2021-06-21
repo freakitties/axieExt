@@ -9,7 +9,7 @@ const colorMap = {
     "bird": "rgb(255, 139, 189)",
     "bug": "rgb(255, 83, 65)"
 }
-const classGeneMap = {"0000": "beast", "0001": "bug", "0010": "bird", "0011": "plant", "0100": "aquatic", "0101": "reptile", "1000": "???", "1001": "???", "1010": "???"};
+const classGeneMap = {"0000": "beast", "0001": "bug", "0010": "bird", "0011": "plant", "0100": "aquatic", "0101": "reptile", "1000": "mech", "1001": "dawn", "1010": "dusk"};
 const typeOrder = {"patternColor": 1, "eyes": 2, "mouth": 3, "ears": 4, "horn": 5, "back": 6, "tail": 7};
 const geneColorMap = {"0000": {"0010": "ffec51","0011": "ffa12a","0100": "f0c66e", "0110": "60afce"},
 "0001": {"0010": "ff7183", "0011": "ff6d61", "0100": "f74e4e",},
@@ -18,11 +18,11 @@ const geneColorMap = {"0000": {"0010": "ffec51","0011": "ffa12a","0100": "f0c66e
 "0100": {"0010": "4cffdf", "0011": "2de8f2","0100": "759edb", "0110": "ff5a71"},
 "0101": {"0010": "fdbcff", "0011": "ef93ff","0100": "f5e1ff", "0110": "43e27d"},
 //nut hidden_1
-"1000": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"},
+    "1000": {"0010": "c6bdd4", "0011": "c6bdd4","0100": "c6bdd4", "0110": "c6bdd4"},
 //star hidden_2
-"1001": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"},
+    "1001": {"0010": "beceff", "0011": "beceff","0100": "beceff", "0110": "beceff"},
 //moon hidden_3
-"1010": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"}};
+    "1010": {"0010": "129092", "0011": "129092","0100": "129092", "0110": "129092"}};
 const PROBABILITIES = {d: 0.375, r1: 0.09375, r2: 0.03125};
 const parts = ["eyes", "mouth" ,"ears", "horn", "back", "tail"];
 const MAX_QUALITY = 6 * (PROBABILITIES.d + PROBABILITIES.r1 + PROBABILITIES.r2);
@@ -138,14 +138,14 @@ function getQualityAndPureness(traits, cls) {
     let quality = 0;
     let dPureness = 0;
     for (let i in parts) {
-        if (traits[parts[i]].d.class == cls) {
+        if (traits[parts[i]].d.class == cls || (cls == 'dusk' && (traits[parts[i]].d.class == 'reptile' || traits[parts[i]].d.class == 'aquatic')) || (cls == 'dawn' && (traits[parts[i]].d.class == 'bird' || traits[parts[i]].d.class == 'plant')) || (cls == 'mech' && (traits[parts[i]].d.class == 'bug' || traits[parts[i]].d.class == 'beast'))) {
             quality += PROBABILITIES.d;
             dPureness++;
         }
-        if (traits[parts[i]].r1.class == cls) {
+        if (traits[parts[i]].r1.class == cls || (cls == 'dusk' && (traits[parts[i]].r1.class == 'reptile' || traits[parts[i]].r1.class == 'aquatic')) || (cls == 'dawn' && (traits[parts[i]].r1.class == 'bird' || traits[parts[i]].r1.class == 'plant')) || (cls == 'mech' && (traits[parts[i]].r1.class == 'bug' || traits[parts[i]].r1.class == 'beast'))) {
             quality += PROBABILITIES.r1;
         }
-        if (traits[parts[i]].r2.class == cls) {
+        if (traits[parts[i]].r2.class == cls || (cls == 'dusk' && (traits[parts[i]].r2.class == 'reptile' || traits[parts[i]].r2.class == 'aquatic')) || (cls == 'dawn' && (traits[parts[i]].r2.class == 'bird' || traits[parts[i]].r2.class == 'plant')) || (cls == 'mech' && (traits[parts[i]].r2.class == 'bug' || traits[parts[i]].r2.class == 'beast'))) {
             quality += PROBABILITIES.r2;
         }
     }
