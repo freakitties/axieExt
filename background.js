@@ -61,7 +61,7 @@ function invalidateAxieInfoMarket(id, sendResponse) {
   fetch("https://1s9wo04jw3.execute-api.us-east-1.amazonaws.com/prod/invalidateaxie/" + parseInt(id), {"headers":{"content-type":"application/json"},"method":"GET"})
   	.then(response => {
         response.json().then(result => {
-		    console.log("Axie service result: ", result);
+		    console.log("Axie invalidate result: ", result);
 			if (!result) {
 			  throw "Bad axie service result.";
 			}

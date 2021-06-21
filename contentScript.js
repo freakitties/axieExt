@@ -843,13 +843,11 @@ TODO: add support for breeding window
             let axie;
             axie = await getAxieInfoMarket(axieId);
 
-			genUpdateDiv(axie);
-			let hasAuctionData = document.querySelectorAll(".items-center > div .text-center");
-		    if (!axie.auction && hasAuctionData && hasAuctionData.length > 0) {
-            	invalidateAxieInfoMarketCB(axie.id, () => {
-				  clearUpdateDiv();
-				});
-			} 
+		  	if (axie && axie.id) {
+			  invalidateAxieInfoMarketCB(axie.id, () => {
+				clearUpdateDiv();
+			  });
+			}
 
             if (axie.stage > 2) {
                 let xpath = "(//svg:svg[@viewBox='681 3039 12 11'])[2]";
