@@ -3,7 +3,7 @@ var observer;
 const observerConfig = { attributes: false, childList: true, subtree: true };
 const colorMap = {
     "plant": "rgb(108, 192, 0)",
-    "reptile": "rgb(200, 138, 224)",
+    "reptile": "rgb(220, 139, 228)",
     "beast": "rgb(255, 184, 18)",
     "aquatic": "rgb(0, 184, 206)",
     "bird": "rgb(255, 139, 189)",
@@ -628,7 +628,7 @@ debugLog(axies);
                                     //n.remove() doesn't work. probably because removing during iteration is not supported.
                                 }
                             });
-                            statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
+                            statsDiv.textContent = "🐣: " + axie.breedCount + ", " + stats;
                         }
                         //prevent dupes
                         if ((content.childElementCount == 0)) {
