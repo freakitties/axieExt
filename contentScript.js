@@ -111,7 +111,7 @@ debugLog("mutationsList", mutationsList);
             //if you browses quickly, run() won't clearInterval before the page is ready
             if (intID != -1) {
                 clearInterval(intID);
-            }
+             }
             intID = setInterval(run, 1000);
         }
     };
@@ -135,22 +135,53 @@ async function getBodyParts() {
     }
 }
 
-function getQualityAndPureness(traits, cls) {
+function addClass(classCt, className) {
+  if (classCt[className] == null) {
+	classCt[className] = 0;
+  }
+
+  classCt[className] += 1;
+}
+
+function checkSecondaryClassPureness(classCt, traits) {
+  let max = 0;
+  let secondaryClass = null;
+  for (let i in classCt) {
+	if (classCt[i] > max) {
+	  max = classCt[i];
+	  secondaryClass = i;
+	}
+  }
+
+  return getQualityAndPureness(traits, secondaryClass, true);
+}
+
+function getQualityAndPureness(traits, cls, ignoreSecondary) {
     let quality = 0;
     let dPureness = 0;
+    let classCt = {};
     for (let i in parts) {
+	  	addClass(classCt, traits[parts[i]].d.class);
         if (traits[parts[i]].d.class == cls) {
             quality += PROBABILITIES.d;
             dPureness++;
         }
+	  	addClass(classCt, traits[parts[i]].r1.class);
         if (traits[parts[i]].r1.class == cls) {
             quality += PROBABILITIES.r1;
         }
+	  	addClass(classCt, traits[parts[i]].r2.class);
         if (traits[parts[i]].r2.class == cls) {
             quality += PROBABILITIES.r2;
         }
     }
-    return {quality: quality/MAX_QUALITY, pureness: dPureness};
+
+  	let secondaryScore = {quality:0};
+  	if (!ignoreSecondary) {
+	  secondaryScore = checkSecondaryClassPureness(classCt, traits);
+	}
+
+    return {quality: quality/MAX_QUALITY, pureness: dPureness, secondary: secondaryScore.quality};
 }
 
 function strMul(str, num) {
@@ -325,10 +356,11 @@ function getAxieInfoMarket(id) {
                 if (result && result["stage"] && result.stage > 2) {
                     axies[id].genes = genesToBin(BigInt(axies[id].genes));
                     let traits = getTraits(axies[id].genes);
-                    let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
+                    let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase(), false);
                     axies[id].traits = traits;
                     axies[id].quality = qp.quality;
                     axies[id].pureness = qp.pureness;
+					axies[id].secondary = qp.secondary;
                 }
                 resolve(result);
             });
@@ -345,10 +377,11 @@ function invalidateAxieInfoMarketCB(id, cb) {
 		if (result && result["stage"] && result.stage > 2) {
 			axies[id].genes = genesToBin(BigInt(axies[id].genes));
 			let traits = getTraits(axies[id].genes);
-			let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
+			let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase(), false);
 			axies[id].traits = traits;
 			axies[id].quality = qp.quality;
 			axies[id].pureness = qp.pureness;
+			axies[id].secondary = qp.secondary;
 		}
 		cb(result);
 	});
@@ -366,10 +399,11 @@ function getAxieInfoMarketCB(id, cb) {
 			  if (result.stage > 2) {
 				  axies[id].genes = genesToBin(BigInt(axies[id].genes));
 				  let traits = getTraits(axies[id].genes);
-				  let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
+				  let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase(), false);
 				  axies[id].traits = traits;
 				  axies[id].quality = qp.quality;
 				  axies[id].pureness = qp.pureness;
+				  axies[id].secondary = qp.secondary;
 			  }
 			  cb(result);
 		  });
@@ -451,10 +485,11 @@ debugLog("Account: " + address);
 					if (axie.stage > 2) {
 						axies[id].genes = genesToBin(BigInt(axies[id].genes));
 						let traits = getTraits(axies[id].genes);
-						let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
+						let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase(), false);
 						axies[id].traits = traits;
 						axies[id].quality = qp.quality;
 						axies[id].pureness = qp.pureness;
+					    axies[id].secondary = qp.secondary;
 					}
 				}
             }
@@ -699,7 +734,8 @@ function renderCard(anc, axie) {
 		let content = card.children[2];
 		let statsDiv = document.createElement("div");
 		let purity = Math.round(axie.quality * 100);
-		if (purity == 100) {
+		let secondary = Math.round(axie.secondary * 100);
+		if (purity == 100 || secondary == 100) {
 		  let imgHolder = anc.querySelector(".img-placeholder");
 		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/XDZT.gif)";
 		  imgHolder.style["background-position-x"] = "112px";
@@ -714,7 +750,7 @@ function renderCard(anc, axie) {
 
 	  	let stats = "";
 	  	if (axie.stats && axie.stats.hp) {
-			stats = "H: " + axie.stats.hp + ", S: " + axie.stats.speed + ", M: " + axie.stats.morale + ", P: " + purity + "%";
+			stats = "H:" + axie.stats.hp + " S:" + axie.stats.speed + " M:" + axie.stats.morale + " P:" + purity + "%"+ " S:" + secondary + "%";
 		}
 
 		content.className = card.children[2].className;
@@ -728,7 +764,7 @@ function renderCard(anc, axie) {
 					//n.remove() doesn't work. probably because removing during iteration is not supported.
 				}
 			});
-			statsDiv.textContent = "🍆: " + breedCount + ", " + stats;
+			statsDiv.textContent = "🍆" + breedCount + " " + stats;
 		} else if (axie.stage < 3) {
 		  	birthTime = new Date((axie.birthDate * 1000) + (5*86400000));
 		    timeToBirth = birthTime.getTime() - new Date().getTime();
