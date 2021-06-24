@@ -355,23 +355,25 @@ function invalidateAxieInfoMarketCB(id, cb) {
 }
 
 function getAxieInfoMarketCB(id, cb) {
-    debugLog("getAxieInfoMarket", id);
+    debugLog("getAxieInfoMarketCB", id);
 	if (id in axies) {
 		cb(axies[id]);
 	} else {
 		axies[id] = {}; //kind of mutex
-		chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
-			axies[id] = result;
-			if (result.stage > 2) {
-				axies[id].genes = genesToBin(BigInt(axies[id].genes));
-				let traits = getTraits(axies[id].genes);
-				let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
-				axies[id].traits = traits;
-				axies[id].quality = qp.quality;
-				axies[id].pureness = qp.pureness;
-			}
-			cb(result);
-		});
+	  	setTimeout(() => { // Give it a little space around in the time.
+		  chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
+			  axies[id] = result;
+			  if (result.stage > 2) {
+				  axies[id].genes = genesToBin(BigInt(axies[id].genes));
+				  let traits = getTraits(axies[id].genes);
+				  let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
+				  axies[id].traits = traits;
+				  axies[id].quality = qp.quality;
+				  axies[id].pureness = qp.pureness;
+			  }
+			  cb(result);
+		  });
+		}, Math.random() * 1000);
 	}
 }
 
@@ -569,6 +571,8 @@ function genUpdateDiv(axie) {
 	updateDiv.style.paddingTop = "3px";
 
 	let topBar = document.getElementsByClassName("fixed")[3];
+	if (!topBar || !topBar.firstChild) return;
+
 	topBar.insertBefore(updateDiv, topBar.firstChild);
 	
 	let button = document.createElement("button");
@@ -789,7 +793,7 @@ function renderCard(anc, axie) {
 	}
 }
 
-let canUseCallback = false;
+let canUseCallback = true;
 async function run() {
     debugLog("run");
     let dbg;
@@ -908,7 +912,7 @@ debugLog(axies);
 			  			renderCard(anc, axie);
 					} else {
 					  getAxieInfoMarketCB(axieId, ((anchor) => {
-						return (axie) => {
+						return function(axie) {
 						  if (!axie.fromCache) {
 							  canUseCallback = false;
 						  }
@@ -918,7 +922,7 @@ debugLog(axies);
 					}
 				  } else {
 					getAxieInfoMarketCB(axieId, ((anchor) => {
-					  return (axie) => {
+					  return function(axie) {
 						if (!axie.fromCache) {
 					  		canUseCallback = false;
 						}
@@ -927,8 +931,8 @@ debugLog(axies);
 					})(anc));
 				  }
                 } else {
-                    axie = axies[axieId];
-			  		renderCard(anc, axie);
+				  axie = axies[axieId];
+				  renderCard(anc, axie);
                 }
 
             }
