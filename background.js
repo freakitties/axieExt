@@ -34,7 +34,7 @@ function getAxieInfoMarket(id, sendResponse) {
 */
 
 function getAxieInfoMarket(id, sendResponse) {
-  fetch("https://1s9wo04jw3.execute-api.us-east-1.amazonaws.com/prod/getaxies/" + parseInt(id), {"headers":{"content-type":"application/json"},"method":"GET"})
+  fetch("https://api.axie.technology/getaxies/" + parseInt(id), {"headers":{"content-type":"application/json"},"method":"GET"})
   	.then(response => {
         response.json().then(result => {
 		    console.log("Axie service result: ", result);
@@ -58,7 +58,7 @@ function getAxieInfoMarket(id, sendResponse) {
 }
 
 function invalidateAxieInfoMarket(id, sendResponse) {
-  fetch("https://1s9wo04jw3.execute-api.us-east-1.amazonaws.com/prod/invalidateaxie/" + parseInt(id), {"headers":{"content-type":"application/json"},"method":"GET"})
+  fetch("https://api.axie.technology/invalidateaxie/" + parseInt(id), {"headers":{"content-type":"application/json"},"method":"GET"})
   	.then(response => {
         response.json().then(result => {
 		    console.log("Axie invalidate result: ", result);
