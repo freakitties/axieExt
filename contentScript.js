@@ -663,8 +663,14 @@ function genMorphDiv(axie) {
 	morphDiv.style.paddingTop = "3px";
 
 	let fixedBars = document.getElementsByClassName("fixed");
-	if (!fixedBars || fixedBars.length < 4)
-	  return;
+	if (!fixedBars || fixedBars.length < 4) {
+	  fixedBars = document.getElementsByClassName("border-b")
+	  if (!fixedBars || fixedBars.length < 2)
+	  	return;
+	  fixedBar = fixedBars[0]; 
+	  fixedBars = []
+	  fixedBars[3] = fixedBar;
+	}
 
 	let topBar = fixedBars[3];
 	topBar.insertBefore(morphDiv, topBar.firstChild);
@@ -790,6 +796,9 @@ function renderCard(anc, axie) {
 				}
 			});
 			statsDiv.textContent = "🍆" + breedCount + " " + stats;
+		  	if (options.axieEx_minimal) {
+				statsDiv.textContent = "🍆:" + breedCount + " " + stats;
+			}
 		} else if (axie.stage < 3) {
 		  	birthTime = new Date((axie.birthDate * 1000) + (5*86400000));
 		    timeToBirth = birthTime.getTime() - new Date().getTime();

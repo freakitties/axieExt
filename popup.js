@@ -1,7 +1,8 @@
 
-const optionsMapping = {enableOption: ENABLE_OPTION, showBreedsStats: SHOW_BREEDS_STATS_OPTION};
+const optionsMapping = {enableOption: ENABLE_OPTION, minimalOption: MINIMAL_OPTION, showBreedsStats: SHOW_BREEDS_STATS_OPTION};
 $(document).ready(function(){
     let options = Object.keys(optionsMapping);
+    console.log("Got options...", optionsMapping);
     getOptions(function(response) {
         let storedOpts = response;
         if (Object.keys(storedOpts).length != options.length) {
