@@ -742,6 +742,13 @@ function renderCard(anc, axie) {
 		  imgHolder.style["background-position-y"] = "71px";
 		  imgHolder.style["background-size"] = "39%";
 		  imgHolder.style["background-repeat"] = "no-repeat";
+		  if (options.axieEx_minimal) {
+		  	imgHolder.style["background-image"] = "url(https://i.imgur.com/gOLXyOa.png)";
+			imgHolder.style["background-position-x"] = "0px";
+			imgHolder.style["background-position-y"] = "0px";
+			imgHolder.style["background-size"] = "10%";
+			imgHolder.style["background-repeat"] = "no-repeat";
+		  }
 		} else if (purity == 100 || secondary == 100) {
 		  let imgHolder = anc.querySelector(".img-placeholder");
 		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/XDZT.gif)";
@@ -749,6 +756,13 @@ function renderCard(anc, axie) {
 		  imgHolder.style["background-position-y"] = "75px";
 		  imgHolder.style["background-size"] = "70%";
 		  imgHolder.style["background-repeat"] = "no-repeat";
+		  if (options.axieEx_minimal) {
+		  	imgHolder.style["background-image"] = "url(https://i.imgur.com/gOLXyOa.png)";
+			imgHolder.style["background-position-x"] = "0px";
+			imgHolder.style["background-position-y"] = "0px";
+			imgHolder.style["background-size"] = "10%";
+			imgHolder.style["background-repeat"] = "no-repeat";
+		  }
 		}
 
 
@@ -759,6 +773,9 @@ function renderCard(anc, axie) {
 	  	let stats = "";
 	  	if (axie.stats && axie.stats.hp) {
 			stats = "H:" + axie.stats.hp + " S:" + axie.stats.speed + " M:" + axie.stats.morale + " P:" + purity + "%"+ " S:" + secondary + "%";
+		  if (options.axieEx_minimal) {
+			stats = "H: " + axie.stats.hp + " S: " + axie.stats.speed + " M: " + axie.stats.morale + " P: " + purity + "%";
+		  }
 		}
 
 		content.className = card.children[2].className;
@@ -800,6 +817,13 @@ function renderCard(anc, axie) {
 				imgHolder.style["background-position-y"] = "68px";
 				imgHolder.style["background-size"] = "80%";
 				imgHolder.style["background-repeat"] = "no-repeat";
+		  		if (options.axieEx_minimal) {
+				  imgHolder.style["background-image"] = "url(https://i.imgur.com/gOLXyOa.png)";
+				  imgHolder.style["background-position-x"] = "0px";
+				  imgHolder.style["background-position-y"] = "0px";
+				  imgHolder.style["background-size"] = "10%";
+				  imgHolder.style["background-repeat"] = "no-repeat";
+				}
 			}
 			content.className = content.className.replace("invisible", "visible");
 		}
@@ -1000,6 +1024,7 @@ var options = {};
 getOptions((response) => {
     options[ENABLE_OPTION] = response[ENABLE_OPTION];
     options[SHOW_BREEDS_STATS_OPTION] = response[SHOW_BREEDS_STATS_OPTION];
+    options[MINIMAL_OPTION] = response[MINIMAL_OPTION];
     if (options[ENABLE_OPTION]) {
         init();
         intID = setInterval(run, 1000);
