@@ -735,7 +735,14 @@ function renderCard(anc, axie) {
 		let statsDiv = document.createElement("div");
 		let purity = Math.round(axie.quality * 100);
 		let secondary = Math.round(axie.secondary * 100);
-		if (purity == 100 || secondary == 100) {
+		if ((purity >= 97 && purity < 100) || (secondary >= 97 && secondary < 100)) {
+		  let imgHolder = anc.querySelector(".img-placeholder");
+		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/770159246796128258.gif)";
+		  imgHolder.style["background-position-x"] = "173px";
+		  imgHolder.style["background-position-y"] = "116px";
+		  imgHolder.style["background-size"] = "19%";
+		  imgHolder.style["background-repeat"] = "no-repeat";
+		} else if (purity == 100 || secondary == 100) {
 		  let imgHolder = anc.querySelector(".img-placeholder");
 		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/XDZT.gif)";
 		  imgHolder.style["background-position-x"] = "112px";
@@ -743,6 +750,7 @@ function renderCard(anc, axie) {
 		  imgHolder.style["background-size"] = "70%";
 		  imgHolder.style["background-repeat"] = "no-repeat";
 		}
+
 
 		let breedHolder = anc.getElementsByTagName("small");
 		breedCount = breedHolder[1].innerText;
@@ -847,7 +855,10 @@ debugLog("run ready");
 debugLog("not ready");
             if (notReadyCount > MAX_RUN_RETRIES) {
                 clearInterval(intID);
-                console.log("Page took too long to load. Bailing");
+                console.log("Page took too long to load. Going anyway...");
+			  clearInterval(intID);
+			  intID = -1;
+			  notReadyCount = 0;
             }
             return;
         }
