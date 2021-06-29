@@ -737,7 +737,7 @@ function renderCard(anc, axie) {
 		let secondary = Math.round(axie.secondary * 100);
 		if ((purity >= 97 && purity < 100) || (secondary >= 97 && secondary < 100)) {
 		  let imgHolder = anc.querySelector(".img-placeholder");
-		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/770159246796128258.gif)";
+		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/770159246796128258.png)";
 		  imgHolder.style["background-position-x"] = "173px";
 		  imgHolder.style["background-position-y"] = "116px";
 		  imgHolder.style["background-size"] = "19%";
