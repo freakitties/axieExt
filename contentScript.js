@@ -84,7 +84,7 @@ async function init() {
 debugLog("mutationsList", mutationsList);
 
         //ignore if not a supported page
-        if (!window.location.href.match(/https:\/\/marketplace\.axieinfinity\.com\/profile\/(inventory|0x\w+)\/axie/) && !window.location.href.startsWith("https://marketplace.axieinfinity.com/axie")) {
+        if (!window.location.href.match(/https:\/\/marketplace\.axieinfinity\.com\/profile\/(inventory|(0x|ronin:)\w+)\/axie/) && !window.location.href.startsWith("https://marketplace.axieinfinity.com/axie")) {
             debugLog("ignoring");
             return;
         }
@@ -119,7 +119,7 @@ debugLog("mutationsList", mutationsList);
 
 var bodyPartsMap = {};
 async function getBodyParts() {
-    let parts = await fetch('https://axieinfinity.com/api/v2/body-parts').
+    let parts = await fetch('https://axieinfinity.com/api/v2/body-parts?r=freak').
         then(res => res.json()).
         catch(async (err) => {
             console.log("Failed to get body parts from the API");
@@ -281,6 +281,7 @@ async function getAccountFromProfile() {
         let anc = axieAnchors[0];
         let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
         let axie = await getAxieInfoMarket(axieId);
+        //this will return the 0x formatted ronin address
         return axie.owner;
     }
     return null;
@@ -288,9 +289,15 @@ async function getAccountFromProfile() {
 
 function getAccount() {
     //https://marketplace.axieinfinity.com/profile/0x.../axie
+    //https://marketplace.axieinfinity.com/profile/ronin:.../axie
     let checkIndex = "https://marketplace.axieinfinity.com/profile/".length;
     let start = window.location.href.slice("https://marketplace.axieinfinity.com/profile/".length);
     let account = start.slice(0, start.indexOf("/"));
+    if (account.startsWith("ronin:")) {
+        account = account.replace("ronin:", "0x");
+    } else {
+        //0xaddress. TODO: get ronin address from eth addr
+    }
     //TODO: validate address
     if (account !== "") {
         return account;
@@ -344,7 +351,7 @@ async function getAxieBriefList() {
         address = await getAccountFromProfile();
         sort = "IdDesc";
         auctionType = "All";
-    } else if (window.location.href.startsWith("https://marketplace.axieinfinity.com/profile/0x")) {
+    } else if (window.location.href.startsWith("https://marketplace.axieinfinity.com/profile/ronin:")) { // || window.location.href.startsWith("https://marketplace.axieinfinity.com/profile/0x")) {
         address = getAccount();
         sort = "IdDesc";
         auctionType = "All";
