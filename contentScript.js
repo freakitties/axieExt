@@ -538,9 +538,13 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
     appendTrait(table, axie.traits.back);
     appendTrait(table, axie.traits.tail);
     traits.appendChild(table);
-    traits.style.display = "none";
-    traits.style.position = "absolute";
-    traits.style["z-index"] = "9999";
+    if (mouseOverNode) {
+      traits.style.display = "none";
+	  traits.style.position = "absolute";
+	  traits.style["z-index"] = "9999";
+	} else {
+	  traits.style["margin-right"] = "15px";
+	}
     traits.style.border = "grey";
     traits.style["border-style"] = "solid";
     traits.style["border-width"] = "1px";
@@ -576,12 +580,15 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
             traits.style.left = "0px";
         }
     }
-    mouseOverNode.addEventListener("mouseover", function() {
-        traits.style.display = "block";
-    });
-    mouseOverNode.addEventListener("mouseout", function() {
-        traits.style.display = "none";
-    });
+    
+  	if (mouseOverNode) {
+	  mouseOverNode.addEventListener("mouseover", function() {
+		  traits.style.display = "block";
+	  });
+	  mouseOverNode.addEventListener("mouseout", function() {
+		  traits.style.display = "none";
+	  });
+	}
     return traits;
 }
 
@@ -957,6 +964,31 @@ TODO: add support for breeding window
                 } else if (!currentURL.startsWith("https://marketplace.axieinfinity.com/axie/")) {
                     detailsNode.appendChild(traits);
                 }
+
+			  	let canvasNodes = document.getElementsByTagName("canvas");
+			  	if (canvasNodes && canvasNodes.length > 0) {
+				  let canvasNode = canvasNodes[0];
+				  let hostNode = canvasNode.parentElement;
+				  if (hostNode) {
+					hostNode = hostNode.parentElement;
+					if (hostNode) {
+					  hostNode = hostNode.parentElement;
+					  if (hostNode) { 
+                		let traits2 = genGenesDiv(axie, null, "details");
+						traits2.style["font-weight"] = "bold";
+
+						hostNode.appendChild(traits2);
+		  				console.log(traits2.firstChild.firstChild)
+						let dataDiv = document.createElement("div");
+						let purity = Math.round(axie.quality * 100);
+						let secondary = Math.round(axie.secondary * 100);
+						dataDiv.textContent = "P: " + purity + "% S: " + secondary + "%";
+
+		  				traits2.firstChild.firstChild.appendChild(dataDiv);
+					  }
+					}
+				  }
+				}
             }
         }
         // else {
