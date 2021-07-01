@@ -748,7 +748,7 @@ function renderCard(anc, axie) {
 		let statsDiv = document.createElement("div");
 		let purity = Math.round(axie.quality * 100);
 		let secondary = Math.round(axie.secondary * 100);
-		if ((purity >= 97 && purity < 100) || (secondary >= 97 && secondary < 100)) {
+		if (!options.axieEx_minimal && ((purity >= 97 && purity < 100) || (secondary >= 97 && secondary < 100))) {
 		  let imgHolder = anc.querySelector(".img-placeholder");
 		  imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/770159246796128258.png)";
 		  imgHolder.style["background-position-x"] = "122px";
@@ -778,7 +778,6 @@ function renderCard(anc, axie) {
 		  }
 		}
 
-
 		let breedHolder = anc.getElementsByTagName("small");
 		breedCount = breedHolder[1].innerText;
 		breedCount = breedCount.replace(/.*:/,"") - 0;
@@ -787,7 +786,7 @@ function renderCard(anc, axie) {
 	  	if (axie.stats && axie.stats.hp) {
 			stats = "H:" + axie.stats.hp + " S:" + axie.stats.speed + " M:" + axie.stats.morale + " P:" + purity + "%"+ " S:" + secondary + "%";
 		  if (options.axieEx_minimal) {
-			stats = "H: " + axie.stats.hp + " S: " + axie.stats.speed + " M: " + axie.stats.morale + " P: " + purity + "%";
+			stats = "H:" + axie.stats.hp + " S:" + axie.stats.speed + " S:" + axie.stats.skill + " M:" + axie.stats.morale + " P:" + secondary + "%";
 		  }
 		}
 
@@ -803,15 +802,19 @@ function renderCard(anc, axie) {
 				}
 			});
 			statsDiv.textContent = "🍆" + breedCount + " " + stats;
-		  	if (options.axieEx_minimal) {
-				statsDiv.textContent = "🍆:" + breedCount + " " + stats;
-			}
 		} else if (axie.stage < 3) {
 		  	birthTime = new Date((axie.birthDate * 1000) + (5*86400000));
 		    timeToBirth = birthTime.getTime() - new Date().getTime();
 			timeToHatch = (new Date((axie.birthDate * 1000) + (5*86400000)) + "").replace(/GMT.*/,"");
-			breedHolder[1].textContent = "Hatch: " + timeToHatch;
-		  	if (timeToBirth < 86400000) {
+            var timerCheck;
+            if (options.axieEx_minimal) {
+                timerCheck = 1;
+                breedHolder[1].textContent = timeToHatch;
+            } else {
+                timerCheck = 86400000;
+                breedHolder[1].textContent = "Hatch: " + timeToHatch;
+            }
+		  	if (timeToBirth < timerCheck) {
 			  	//console.log(timeToBirth);
 			  	minutesToBirth = Math.floor(timeToBirth/1000/60);
 			    hoursToBirth = Math.floor(minutesToBirth / 60);
@@ -824,8 +827,7 @@ function renderCard(anc, axie) {
 					}
 				} else {
 					breedHolder[1].textContent = "Hours to hatch: " + hoursToBirth;
-				} 
-
+				}
 
 				let imgHolder = anc.querySelector(".img-placeholder");
 				imgHolder.style["background-image"] = "url(https://imagewerks.s3.us-west-2.amazonaws.com/BJy7iy6Tb/pngaaa.com-1654773.png)";
@@ -857,7 +859,7 @@ function renderCard(anc, axie) {
 
 		    startPrice = (axie.auction.startingPrice/1000000000000000000).toFixed(4);
 		    endingPrice = (axie.auction.endingPrice/1000000000000000000).toFixed(4);
-		    auctionHolder.textContent = startPrice + " > " + endingPrice + "; " + timeLeft + "/" + timeTotal +" hours";
+		    auctionHolder.textContent = startPrice + " -> " + endingPrice + "; " + timeLeft + "/" + timeTotal +" hours";
 			parentNode = breedHolder[1].parentNode;
 		  	if (startPrice != endingPrice && parentNode.getElementsByClassName("auctionBucket").length == 0) {
 				parentNode.append(auctionHolder);
