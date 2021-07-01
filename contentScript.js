@@ -859,7 +859,7 @@ function renderCard(anc, axie) {
 
 		    startPrice = (axie.auction.startingPrice/1000000000000000000).toFixed(4);
 		    endingPrice = (axie.auction.endingPrice/1000000000000000000).toFixed(4);
-		    auctionHolder.textContent = startPrice + " -> " + endingPrice + "; " + timeLeft + "/" + timeTotal +" hours";
+		    auctionHolder.textContent = startPrice + " / " + endingPrice + " / " + timeLeft + ":" + timeTotal +"h";
 			parentNode = breedHolder[1].parentNode;
 		  	if (startPrice != endingPrice && parentNode.getElementsByClassName("auctionBucket").length == 0) {
 				parentNode.append(auctionHolder);
