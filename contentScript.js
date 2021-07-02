@@ -105,6 +105,7 @@ debugLog("mutationsList", mutationsList);
             currentURL = window.location.href;
 		    clearMorphDiv();
             debugLog('New URI detected.');
+
         }
         //Only call run() if we find certain conditions in the mutation list
         if(loadComplete(mutationsList)) {
@@ -886,6 +887,13 @@ function renderCard(anc, axie) {
 	}
 }
 
+function setupCart() {
+  let cards = document.getElementsByClassName("axie-card");
+  for (let i = 0; i < cards.length; i++) {
+	cards[i].setAttribute("draggable", true);
+  }
+}
+
 let canUseCallback = true;
 async function run() {
     debugLog("run");
@@ -897,6 +905,7 @@ debugLog(axieAnchors);
             clearInterval(intID);
             intID = -1;
             notReadyCount = 0;
+		  	setupCart();
 debugLog("run ready");
         } else {
             notReadyCount++;
