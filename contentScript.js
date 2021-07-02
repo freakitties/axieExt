@@ -909,21 +909,26 @@ function setupCart() {
 
   if (!document.getElementById("cartdropzone")) {
 	let leftTray = document.getElementsByClassName("pb-32 w-full")[0];
-	let targetDiv = document.createElement("div");
+	if (leftTray) {
+	  let targetDiv = document.createElement("div");
 
-	targetDiv.style["min-height"] = "100px";
-	targetDiv.style["overflow-y"] = "auto";
-	targetDiv.id = "cartdropzone";
-	leftTray.appendChild(targetDiv);
-	leftTray.style["overflow-y"] = "hidden";
+	  targetDiv.style["min-height"] = "100px";
+	  targetDiv.style["overflow-y"] = "auto";
+	  targetDiv.id = "cartdropzone";
 
-	targetDiv.addEventListener("drop", drop);
-	targetDiv.addEventListener("dragover", allowDrop);
-	targetDiv.addEventListener("dragleave", dragLeave);
-	targetDiv.classList.add("dragtarget");
-	setTimeout(() => {
-	  targetDiv.style.maxHeight = (window.innerHeight - targetDiv.offsetTop - 10) + "px";
-	}, 100)
+	  leftTray.appendChild(targetDiv);
+	  leftTray.style["overflow-y"] = "hidden";
+	  leftTray.firstChild.style["margin-bottom"] = "0px";
+	  leftTray.firstChild.style["padding-bottom"] = "0px";
+
+	  targetDiv.addEventListener("drop", drop);
+	  targetDiv.addEventListener("dragover", allowDrop);
+	  targetDiv.addEventListener("dragleave", dragLeave);
+	  targetDiv.classList.add("dragtarget");
+	  setTimeout(() => {
+		targetDiv.style.maxHeight = (window.innerHeight - targetDiv.offsetTop - 10) + "px";
+	  }, 100)
+	}
   }
 }
 
@@ -970,7 +975,7 @@ function buildShelfButtons() {
 
 	let button = document.createElement("button");
 	button.classList.add( "px-20",
-	  "py-8",
+	  "py-2",
 	  "relative",
 	  "rounded",
 	  "transition",
@@ -1008,6 +1013,7 @@ function buildShelfButtons() {
 
   	let leftTray = document.getElementsByClassName("pb-32 w-full")[0];
 	let dropZone = document.getElementById("cartdropzone")
+	
 	leftTray.insertBefore(shelf, dropZone);
   }
 }
