@@ -899,27 +899,32 @@ function renderCard(anc, axie) {
 function setupCart() {
   let cards = document.getElementsByClassName("axie-card");
   for (let i = 0; i < cards.length; i++) {
-	cards[i].setAttribute("draggable", true);
-	cards[i].addEventListener("dragstart", drag);
-	cards[i].addEventListener("dragend", dragend);
-	cards[i].id = cards[i].parentElement.href;
+	if (!cards[i].getAttribute("draggable")) {
+	  cards[i].setAttribute("draggable", true);
+	  cards[i].addEventListener("dragstart", drag);
+	  cards[i].addEventListener("dragend", dragend);
+	  cards[i].id = cards[i].parentElement.href;
+	}
   }
 
-  let leftTray = document.getElementsByClassName("pb-32 w-full")[0];
-  let targetDiv = document.createElement("div");
+  if (!document.getElementById("cartdropzone")) {
+	let leftTray = document.getElementsByClassName("pb-32 w-full")[0];
+	let targetDiv = document.createElement("div");
 
-  targetDiv.style["min-height"] = "100px";
-  targetDiv.style["overflow-y"] = "scroll";
-  leftTray.appendChild(targetDiv);
-  leftTray.style["overflow-y"] = "hidden";
+	targetDiv.style["min-height"] = "100px";
+	targetDiv.style["overflow-y"] = "auto";
+	targetDiv.id = "cartdropzone";
+	leftTray.appendChild(targetDiv);
+	leftTray.style["overflow-y"] = "hidden";
 
-  targetDiv.addEventListener("drop", drop);
-  targetDiv.addEventListener("dragover", allowDrop);
-  targetDiv.addEventListener("dragleave", dragLeave);
-  targetDiv.classList.add("dragtarget");
-  setTimeout(() => {
-	targetDiv.style.maxHeight = (window.innerHeight - targetDiv.offsetTop - 10) + "px";
-  }, 100)
+	targetDiv.addEventListener("drop", drop);
+	targetDiv.addEventListener("dragover", allowDrop);
+	targetDiv.addEventListener("dragleave", dragLeave);
+	targetDiv.classList.add("dragtarget");
+	setTimeout(() => {
+	  targetDiv.style.maxHeight = (window.innerHeight - targetDiv.offsetTop - 10) + "px";
+	}, 100)
+  }
 }
 
 
@@ -954,6 +959,59 @@ function dragLeave(ev) {
   ev.target.style.border = "";
 }
 
+function buildShelfButtons() {
+  let shelf = document.getElementById("shelf");
+  if (!shelf) {
+	shelf = document.createElement("div");
+	shelf.style.margin = "5px";
+	shelf.style.paddingRight = "3px";
+	shelf.style.paddingTop = "3px";
+	shelf.id = "shelf";
+
+	let button = document.createElement("button");
+	button.classList.add( "px-20",
+	  "py-8",
+	  "relative",
+	  "rounded",
+	  "transition",
+	  "focus:outline-none",
+	  "border",
+	  "text-white",
+	  "border-primary-4",
+	  "hover:border-primary-3",
+	  "active:border-primary-5",
+	  "bg-primary-4",
+	  "hover:bg-primary-3",
+	  "active:bg-primary-5",
+	);
+	shelf.appendChild(button);
+	button.title="Click this button to open these axies.";
+
+	let span = document.createElement("span");
+	span.classList.add("visible");
+	button.appendChild(span);
+
+	let div = document.createElement("div");
+	div.classList.add("flex", "items-center");
+	span.appendChild(div);
+
+	let textDiv = document.createElement("div");
+	textDiv.textContent = "Open Axies";
+	div.appendChild(textDiv);
+
+	button.addEventListener("click", () => {
+	  let allAxies = document.getElementsByClassName("cartaxie");
+	  for (let i = 0; i < allAxies.length; i++) {
+		window.open(allAxies[i].getAttribute("href"));
+	  }
+	});
+
+  	let leftTray = document.getElementsByClassName("pb-32 w-full")[0];
+	let dropZone = document.getElementById("cartdropzone")
+	leftTray.insertBefore(shelf, dropZone);
+  }
+}
+
 function drop(ev) {
   ev.preventDefault();
   ev.target.style.border = "";
@@ -963,10 +1021,39 @@ function drop(ev) {
   console.log("Card dropped:", data, document.getElementById(data));
 
   let itemDiv = document.createElement("div");
-  itemDiv.style.maxWidth = "140px";
+  itemDiv.style.maxWidth = "193px";
   itemDiv.classList.add(...("border border-gray-3 bg-gray-4 rounded transition hover:shadow hover:border-gray-6".split(" ")));
+  itemDiv.classList.add("cartaxie");
   itemDiv.style.maxHeight = "116px";
+  itemDiv.setAttribute("href", data);
+  itemDiv.style.position = "relative";
+  itemDiv.addEventListener("click", ((item) => {
+	return (e) => {
+	  e.preventDefault();
+	  window.open(item.getAttribute("href"));
+	};
+  })(itemDiv));
+
+  let closeButton = document.createElement("div");
+  closeButton.style.position = "absolute";
+  closeButton.style.top = "-2px";
+  closeButton.style.right = "3px";
+  closeButton.style.cursor = "pointer";
+  closeButton.textContent = "X"
+  closeButton.style.fontWeight = "bold";
+  closeButton.style.fontSize = "20px";
+  itemDiv.appendChild(closeButton);
+
+  closeButton.addEventListener("click", ((item) => {
+	return (e) => {
+	  e.preventDefault();
+	  e.stopPropagation();
+	  item.remove();
+	};
+  })(itemDiv));
+
   let sourceCard = document.getElementById(data);
+
   let dataDivs = sourceCard.getElementsByClassName("flex-row");
 
   if (target.firstChild) {
@@ -994,6 +1081,8 @@ function drop(ev) {
   sourceImg.firstChild.style.position = "relative";
   sourceImg.firstChild.style.top = "-21px";
   itemDiv.appendChild(sourceImg);
+
+  buildShelfButtons();
 }
 
 let canUseCallback = true;
