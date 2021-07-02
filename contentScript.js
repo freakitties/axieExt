@@ -908,8 +908,8 @@ function setupCart() {
   let leftTray = document.getElementsByClassName("pb-32 w-full")[0];
   let targetDiv = document.createElement("div");
 
-  targetDiv.style["min-height"] = "500px";
-  targetDiv.style["overflow-y"] = "scroll-y";
+  targetDiv.style["min-height"] = "100px";
+  targetDiv.style["overflow-y"] = "scroll";
   leftTray.appendChild(targetDiv);
   leftTray.style["overflow-y"] = "hidden";
 
@@ -917,6 +917,9 @@ function setupCart() {
   targetDiv.addEventListener("dragover", allowDrop);
   targetDiv.addEventListener("dragleave", dragLeave);
   targetDiv.classList.add("dragtarget");
+  setTimeout(() => {
+	targetDiv.style.maxHeight = (window.innerHeight - targetDiv.offsetTop - 10) + "px";
+  }, 100)
 }
 
 
@@ -927,9 +930,7 @@ function allowDrop(ev) {
 }
 
 function drag(ev) {
-  console.log(ev.target.parentElement.href)
   ev.dataTransfer.setData("text/plain", ev.target.id);
-  console.log("Ev Data Transfer", ev.dataTransfer.getData("text/plain"));
 
   let targets = document.getElementsByClassName("dragtarget");
   for (target in targets) {
