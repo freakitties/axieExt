@@ -358,6 +358,7 @@ function getAxieInfoMarket(id) {
             resolve(axies[id]);
         } else {
             axies[id] = {}; //kind of mutex
+		  try {
             chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
 			    //console.log("From fetch: ", result);
                 axies[id] = result;
@@ -372,6 +373,9 @@ function getAxieInfoMarket(id) {
                 }
                 resolve(result);
             });
+		  } catch(ex) {
+
+		  }
         }
     });
 }
@@ -379,20 +383,23 @@ function getAxieInfoMarket(id) {
 function invalidateAxieInfoMarketCB(id, cb) {
     debugLog("invalidateAxieInfoMarket", id);
 	axies[id] = {}; //kind of mutex
-	chrome.runtime.sendMessage({contentScriptQuery: "invalidateAxieInfoMarket", axieId: id}, function(result) {
-		console.log("From fetch: ", result);
-		axies[id] = result;
-		if (result && result["stage"] && result.stage > 2) {
-			axies[id].genes = genesToBin(BigInt(axies[id].genes));
-			let traits = getTraits(axies[id].genes);
-			let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase(), false);
-			axies[id].traits = traits;
-			axies[id].quality = qp.quality;
-			axies[id].pureness = qp.pureness;
-			axies[id].secondary = qp.secondary;
-		}
-		cb(result);
-	});
+	try {
+	  chrome.runtime.sendMessage({contentScriptQuery: "invalidateAxieInfoMarket", axieId: id}, function(result) {
+		  console.log("From fetch: ", result);
+		  axies[id] = result;
+		  if (result && result["stage"] && result.stage > 2) {
+			  axies[id].genes = genesToBin(BigInt(axies[id].genes));
+			  let traits = getTraits(axies[id].genes);
+			  let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase(), false);
+			  axies[id].traits = traits;
+			  axies[id].quality = qp.quality;
+			  axies[id].pureness = qp.pureness;
+			  axies[id].secondary = qp.secondary;
+		  }
+		  cb(result);
+	  });
+	} catch(ex) {
+	}
 }
 
 function getAxieInfoMarketCB(id, cb) {
@@ -402,19 +409,21 @@ function getAxieInfoMarketCB(id, cb) {
 	} else {
 		axies[id] = {}; //kind of mutex
 	  	setTimeout(() => { // Give it a little space around in the time.
-		  chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
-			  axies[id] = result;
-			  if (result.stage > 2) {
-				  axies[id].genes = genesToBin(BigInt(axies[id].genes));
-				  let traits = getTraits(axies[id].genes);
-				  let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase(), false);
-				  axies[id].traits = traits;
-				  axies[id].quality = qp.quality;
-				  axies[id].pureness = qp.pureness;
-				  axies[id].secondary = qp.secondary;
-			  }
-			  cb(result);
-		  });
+		  try {
+			chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
+				axies[id] = result;
+				if (result.stage > 2) {
+					axies[id].genes = genesToBin(BigInt(axies[id].genes));
+					let traits = getTraits(axies[id].genes);
+					let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase(), false);
+					axies[id].traits = traits;
+					axies[id].quality = qp.quality;
+					axies[id].pureness = qp.pureness;
+					axies[id].secondary = qp.secondary;
+				}
+				cb(result);
+			});
+		  }catch(Ex) {}
 		}, Math.random() * 1000);
 	}
 }
@@ -891,7 +900,99 @@ function setupCart() {
   let cards = document.getElementsByClassName("axie-card");
   for (let i = 0; i < cards.length; i++) {
 	cards[i].setAttribute("draggable", true);
+	cards[i].addEventListener("dragstart", drag);
+	cards[i].addEventListener("dragend", dragend);
+	cards[i].id = cards[i].parentElement.href;
   }
+
+  let leftTray = document.getElementsByClassName("pb-32 w-full")[0];
+  let targetDiv = document.createElement("div");
+
+  targetDiv.style["min-height"] = "500px";
+  targetDiv.style["overflow-y"] = "scroll-y";
+  leftTray.appendChild(targetDiv);
+  leftTray.style["overflow-y"] = "hidden";
+
+  targetDiv.addEventListener("drop", drop);
+  targetDiv.addEventListener("dragover", allowDrop);
+  targetDiv.addEventListener("dragleave", dragLeave);
+  targetDiv.classList.add("dragtarget");
+}
+
+
+function allowDrop(ev) {
+    //console.log("allowDrop")
+  ev.preventDefault();
+  ev.target.style.border = "3px solid green";
+}
+
+function drag(ev) {
+  console.log(ev.target.parentElement.href)
+  ev.dataTransfer.setData("text/plain", ev.target.id);
+  console.log("Ev Data Transfer", ev.dataTransfer.getData("text/plain"));
+
+  let targets = document.getElementsByClassName("dragtarget");
+  for (target in targets) {
+	if (targets[target] && targets[target].style) {
+		targets[target].style.border = "1px solid blue";
+	}
+  }
+}
+
+function dragend(ev) {
+  let targets = document.getElementsByClassName("dragtarget");
+  for (target in targets) {
+	if (targets[target] && targets[target].style) {
+		targets[target].style.border = "";
+	}
+  }
+}
+
+function dragLeave(ev) {
+  //console.log(ev.target.src)
+  ev.target.style.border = "";
+}
+
+function drop(ev) {
+  ev.preventDefault();
+  ev.target.style.border = "";
+  let target = ev.target;
+  console.log(ev);
+  var data = ev.dataTransfer.getData("text/plain");
+  console.log("Card dropped:", data, document.getElementById(data));
+
+  let itemDiv = document.createElement("div");
+  itemDiv.style.maxWidth = "140px";
+  itemDiv.classList.add(...("border border-gray-3 bg-gray-4 rounded transition hover:shadow hover:border-gray-6".split(" ")));
+  itemDiv.style.maxHeight = "116px";
+  let sourceCard = document.getElementById(data);
+  let dataDivs = sourceCard.getElementsByClassName("flex-row");
+
+  if (target.firstChild) {
+  	target.insertBefore(itemDiv, target.firstChild);
+  } else {
+	target.append(itemDiv);
+  }
+
+  for (let rowCt = dataDivs.length -1; rowCt > -1 ; rowCt--) {
+	let row = dataDivs[rowCt].cloneNode(true);
+	row.style.maxHeight = "100px";
+	row.style.fontSize = "var(--font-size-14);"
+	row.classList.add("justify-center");
+	for (let i = 0; i < row.children.length; i++) {
+	  row.children[i].classList.remove("md:text-20");
+	}
+	row.classList.remove("font-medium");
+	itemDiv.appendChild(row);
+  }
+
+  let sourceImg = sourceCard.getElementsByTagName("img")[0].parentElement.cloneNode(true)
+  sourceImg.style.maxHeight = "100px";
+  sourceImg.style.overflow = "hidden";
+  sourceImg.firstChild.style.maxHeight = "100px";
+  sourceImg.firstChild.style.position = "relative";
+  sourceImg.firstChild.style.top = "-21px";
+  itemDiv.appendChild(sourceImg);
 }
 
 let canUseCallback = true;
