@@ -270,8 +270,17 @@ function checkStatus(res) {
     if (res.ok) {
         return res;
     } else {
-        throw Exception("Failed to get axie details: " + res);
+        throw "Failed to get axie details: " + res;
     }
+}
+
+function getAxieIdFromURL(url) {
+    let pattern = /\/axie\/(\d+)/;
+    let m = url.match(pattern);
+    if (m) {
+        return parseInt(m[1]);
+    }
+    return -1;
 }
 
 //Assume we are on https://marketplace.axieinfinity.com/profile/inventory/axie
@@ -279,7 +288,8 @@ async function getAccountFromProfile() {
     let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
     if (axieAnchors.length > 0) {
         let anc = axieAnchors[0];
-        let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
+        let axieId = getAxieIdFromURL(anc.href);
+        if (axieId == -1) return null;
         let axie = await getAxieInfoMarket(axieId);
         //this will return the 0x formatted ronin address
         return axie.owner;
@@ -556,7 +566,8 @@ TODO: add support for breeding window
 
         //single axie (axieDetail page). Added mouseover handler to Stats text
         if (currentURL.match(/https:\/\/marketplace\.axieinfinity\.com\/axie\/\d+/)) {
-            let axieId = parseInt(currentURL.substring(currentURL.lastIndexOf("/") + 1));
+            let axieId = getAxieIdFromURL(currentURL);
+            if (axieId == -1) throw "Bad Axie ID";
             let axie;
             axie = await getAxieInfoMarket(axieId);
 
@@ -587,7 +598,9 @@ TODO: add support for breeding window
             for (let i = 0; i < axieAnchors.length; i++) {
                 let anc = axieAnchors[i];
                 let div = anc.firstElementChild;
-                let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
+                let axieId = getAxieIdFromURL(anc.href);
+                if (axieId == -1) continue;
+
                 if (!(axieId in axies)) {
                     //get all axies on the page and break
 debugLog("getting axies");
@@ -605,8 +618,8 @@ debugLog(axies);
             for (let i = 0; i < axieAnchors.length; i++) {
                 let anc = axieAnchors[i];
                 let div = anc.firstElementChild;
-                let axieId = parseInt(anc.href.substring(anc.href.lastIndexOf("/") + 1));
-
+                let axieId = getAxieIdFromURL(anc.href);
+                if (axieId == -1) continue;
                 let axie;
                 if (!(axieId in axies)) {
                     axie = await getAxieInfoMarket(axieId);
