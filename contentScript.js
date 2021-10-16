@@ -119,6 +119,8 @@ debugLog("mutationsList", mutationsList);
 
 var bodyPartsMap = {};
 async function getBodyParts() {
+	/* This code is returning a CORS error and not loading the extension data */
+	/*
     let parts = await fetch('https://axieinfinity.com/api/v2/body-parts?r=freak').
         then(res => res.json()).
         catch(async (err) => {
@@ -131,6 +133,15 @@ async function getBodyParts() {
         });
     for (let i in parts) {
         bodyPartsMap[parts[i].partId] = parts[i];
+    }
+	*/
+	/* This changed version will work. Extracted from @mamacker/axieExt */
+	let parts = await fetch(chrome.extension.getURL("body-parts.json")).then(
+		(res) => res.json()
+	);
+
+    for (let i in parts) {
+      bodyPartsMap[parts[i].partId] = parts[i];
     }
 }
 
