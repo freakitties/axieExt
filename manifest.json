@@ -1,6 +1,6 @@
 {
     "name": "Freak's Axie Extension",
-    "version": "1.5.2",
+    "version": "1.5.3",
     "description": "An extension to help play Axie Infinity.",
     "permissions": ["activeTab", "declarativeContent", "storage"],
     "icons": {

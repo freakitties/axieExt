@@ -89,15 +89,17 @@ debugLog("mutationsList", mutationsList);
             return;
         }
 
-        if (window.location.href == currentURL && !window.location.href.startsWith("https://marketplace.axieinfinity.com/axie/")) { //ignore details page
+        if (window.location.href == currentURL && !window.location.href.match(ID_PATTERN)) { //ignore details page
             //fix Order By drop down z-index
             if (mutationsList.length == 1 && mutationsList[0].target.children.length == 2){
                 var mutated = mutationsList[0];
-                if (mutated.target.children[1].children[0].nodeName == "UL" && mutated.target.children[1].children[0].textContent.indexOf("Highest Price") != -1) {
-                    mutated.target.children[1].style["zIndex"] = 99999;
-                } else if (mutated.target.children[1].className.includes("transition-opacity")) {
-                    mutated.target.children[1].style["zIndex"] = 99998;
+                if (mutated.target.children[1].children[0].nodeName == "DIV" && mutated.target.children[1].children[0].textContent.search(/Highest Price|Not for sale/)) {
+                    mutated.target.children[1].children[0].style["zIndex"] = 9998;
                 }
+                //what was this for?
+                /*else if (mutated.target.children[1].className.includes("transition-opacity")) {
+                    mutated.target.children[1].style["zIndex"] = 99998;
+                }*/
             }
 
         }
@@ -274,9 +276,9 @@ function checkStatus(res) {
     }
 }
 
+const ID_PATTERN = /\/axie\/(\d+)/;
 function getAxieIdFromURL(url) {
-    let pattern = /\/axie\/(\d+)/;
-    let m = url.match(pattern);
+    let m = url.match(ID_PATTERN);
     if (m) {
         return parseInt(m[1]);
     }
