@@ -5,7 +5,6 @@ try {
 }
 
 chrome.runtime.onInstalled.addListener(function() {
-console.log("Installed");
     getOptions((response) => {
         if (Object.keys(response).length == 0) {
             resetOptions();
