@@ -1,5 +1,11 @@
+try {
+    importScripts("options.js");
+} catch (e) {
+    console.log(e);
+}
 
 chrome.runtime.onInstalled.addListener(function() {
+console.log("Installed");
     getOptions((response) => {
         if (Object.keys(response).length == 0) {
             resetOptions();

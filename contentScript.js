@@ -121,16 +121,8 @@ debugLog("mutationsList", mutationsList);
 
 var bodyPartsMap = {};
 async function getBodyParts() {
-    let parts = await fetch('https://axieinfinity.com/api/v2/body-parts?r=freak').
-        then(res => res.json()).
-        catch(async (err) => {
-            console.log("Failed to get body parts from the API");
-            //API is unreliable. fall back to hard-coded local copy.
-            let parts = await fetch(chrome.extension.getURL('body-parts.json')).then(res => res.json());
-            for (let i in parts) {
-                bodyPartsMap[parts[i].partId] = parts[i];
-            }
-        });
+    //TODO: find the new way parts are listed
+    let parts = await fetch(chrome.runtime.getURL('body-parts.json')).then(res => res.json());
     for (let i in parts) {
         bodyPartsMap[parts[i].partId] = parts[i];
     }
