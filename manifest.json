@@ -1,11 +1,11 @@
 {
     "name": "Freak's Axie Extension",
-    "version": "1.6.0",
+    "version": "1.6.1",
     "description": "An extension to help play Axie Infinity.",
     "permissions": ["activeTab", "declarativeContent", "storage"],
     "host_permissions": [
         "https://marketplace.axieinfinity.com/*",
-        "https://axieinfinity.com/*"
+        "https://*.axieinfinity.com/*"
     ],
     "icons": {
       "16": "images/rep_icon16.png",

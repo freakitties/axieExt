@@ -27,8 +27,8 @@ const PROBABILITIES = {d: 0.375, r1: 0.09375, r2: 0.03125};
 const parts = ["eyes", "mouth" ,"ears", "horn", "back", "tail"];
 const MAX_QUALITY = 6 * (PROBABILITIES.d + PROBABILITIES.r1 + PROBABILITIES.r2);
 const MAX_RUN_RETRIES = 30;
-const OPTIONS_MAP = {"class": "classes", "part": "parts", "bodyShape": "bodyShapes", "stage": "stages", "mystic": "numMystic"};
-const SEARCH_PARAMS = ["class", "stage", "breedCount", "mystic", "pureness", "region", "title", "part", "bodyShape", "hp", "speed", "skill", "morale"];
+const OPTIONS_MAP = {"class": "classes", "part": "parts", "bodyShape": "bodyShapes", "stage": "stages", "mystic": "numMystic", "excludeParts": "parts"};
+const SEARCH_PARAMS = ["class", "stage", "breedCount", "mystic", "pureness", "region", "title", "part", "bodyShape", "hp", "speed", "skill", "morale", "excludeParts", "purity"];
 
 var notReadyCount = 0;
 var currentURL = window.location.href;
@@ -376,7 +376,8 @@ debugLog("Account: " + address);
         auctionType = a[0];
     }
 
-    let criteria = {"region":null,"parts":null,"bodyShapes":null,"classes":null,"stages":null,"numMystic":null,"pureness":null,"title":null,"breedCount":null,"hp":[],"skill":[],"speed":[],"morale":[]}; //"breedable":null,
+    excludedParts = [];
+    let criteria = {"region":null,"parts":null,"bodyShapes":null,"classes":null,"stages":null,"numMystic":null,"pureness":null,"purity":null,"title":null,"breedCount":null,"hp":[],"skill":[],"speed":[],"morale":[]}; //"breedable":null,
     for (let sIdx=0; sIdx < SEARCH_PARAMS.length; sIdx++) {
         let option = SEARCH_PARAMS[sIdx];
         let opts = getQueryParameters(option);
@@ -386,21 +387,39 @@ debugLog("Account: " + address);
                 continue;
             }
             let opt = [];
-            if (["stage", "breedCount", "mystic", "pureness", "hp", "speed", "skill", "morale"].indexOf(option) != -1) {
+            if (["stage", "breedCount", "mystic", "pureness", "hp", "speed", "skill", "morale", "purity"].indexOf(option) != -1) {
                 for (let i=0; i < opts.length; i++) {
                     opt.push(parseInt(opts[i]));
                 }
+                opt.sort((a, b) => a - b);
             } else {
                 for (let i=0; i < opts.length; i++) {
                     if ("title" == option) {
                         opt.push(opts[i].replace(/-/g, " "));
                     } else {
-                        opt.push(opts[i]);
+                        if (option == "excludeParts") {
+                            opt.push("!" + opts[i]);
+                            excludedParts.push(opts[i]);
+                        } else {
+                            opt.push(opts[i]);
+                        }
                     }
                 }
             }
             if (option in OPTIONS_MAP) {
-                criteria[OPTIONS_MAP[option]] = opt;
+                if (["part", "excludeParts"].includes(option)) {
+                    if (criteria[OPTIONS_MAP[option]]) {
+                        combined = [...criteria[OPTIONS_MAP[option]], ...opt];
+                        for (let i=0; i < excludedParts.length; i++) {
+                            combined = combined.filter(e => e !== excludedParts[i]);
+                        }
+                        criteria[OPTIONS_MAP[option]] = combined;
+                    } else {
+                        criteria[OPTIONS_MAP[option]] = opt;
+                    }
+                } else {
+                    criteria[OPTIONS_MAP[option]] = opt;
+                }
             } else {
                 criteria[option] = opt;
             }
