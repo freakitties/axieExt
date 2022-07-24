@@ -58,7 +58,7 @@ function loadComplete(mutationsList) {
         }
 
         for (let j=0; j < mutationsList[i].addedNodes.length; j++) {
-            if ("innerHTML" in mutationsList[i].addedNodes[j] && mutationsList[i].addedNodes[j].innerHTML.includes("<div class=\"axie-card\">") || (mutationsList[i].addedNodes[j].nodeName == "SPAN" && mutationsList[i].addedNodes[j].innerText.match(/\d+ Axies$/))) {
+            if ("innerHTML" in mutationsList[i].addedNodes[j] && mutationsList[i].addedNodes[j].innerHTML.includes("<div class=\"AxieCard_") || (mutationsList[i].addedNodes[j].nodeName == "SPAN" && mutationsList[i].addedNodes[j].innerText.match(/\d+ Axies$/))) {
                 debugLog("loadComplete true", mutationsList[i].addedNodes[j]);
                 return true;
             }
@@ -281,12 +281,14 @@ function getAxieIdFromURL(url) {
 async function getAccountFromProfile() {
     let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
     if (axieAnchors.length > 0) {
-        let anc = axieAnchors[0];
-        let axieId = getAxieIdFromURL(anc.href);
-        if (axieId == -1) return null;
-        let axie = await getAxieInfoMarket(axieId);
-        //this will return the 0x formatted ronin address
-        return axie.owner;
+        for (let i = 0; i < axieAnchors.length; i++ ) {
+            let anc = axieAnchors[i];
+            let axieId = getAxieIdFromURL(anc.href);
+            if (axieId == -1) continue;
+            let axie = await getAxieInfoMarket(axieId);
+            //this will return the 0x formatted ronin address
+            return axie.owner;
+        }
     }
     return null;
 }
@@ -501,9 +503,24 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
                 traits.style.top = "-85px";
             }
             traits.style.left = "0px";
+            mouseOverNode.addEventListener("mouseover", function() {
+                traits.style.display = "block";
+                traits.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.style.zIndex = 9999;
+            });
+            mouseOverNode.addEventListener("mouseout", function() {
+                traits.style.display = "none";
+                traits.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.style.zIndex = '';
+            });
         } else if (type == "details") {
             traits.style.left = "auto";
             traits.style.top = "auto";
+            traits.style.position = "relative";
+            mouseOverNode.addEventListener("mouseover", function() {
+                traits.style.display = "block";
+            });
+            mouseOverNode.addEventListener("mouseout", function() {
+                traits.style.display = "none";
+            });
         }
     } else {
         traits.style.background = "white";
@@ -518,12 +535,6 @@ function genGenesDiv(axie, mouseOverNode, type="list") {
             traits.style.left = "0px";
         }
     }
-    mouseOverNode.addEventListener("mouseover", function() {
-        traits.style.display = "block";
-    });
-    mouseOverNode.addEventListener("mouseout", function() {
-        traits.style.display = "none";
-    });
     return traits;
 }
 
@@ -577,7 +588,7 @@ TODO: add support for breeding window
 */
         }
 
-        //single axie (axieDetail page). Added mouseover handler to Stats text
+        //single axie (axieDetail page). Added mouseover handler to Body parts text
         if (currentURL.match(/https:\/\/marketplace\.axieinfinity\.com\/axie\/\d+/)) {
             let axieId = getAxieIdFromURL(currentURL);
             if (axieId == -1) throw "Bad Axie ID";
@@ -589,7 +600,7 @@ TODO: add support for breeding window
                 let pathNode;
                 let detailsNode;
                 //this will break when localization is implemented on the site
-                xpath = "//div[text()='Stats']";
+                xpath = "//div[text()='Body parts']";
                 pathNode = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 detailsNode = pathNode;
                 let traits = genGenesDiv(axie, detailsNode, "details");
@@ -661,7 +672,7 @@ debugLog(axies);
                                     //n.remove() doesn't work. probably because removing during iteration is not supported.
                                 }
                             });
-                            statsDiv.textContent = "🍆: " + axie.breedCount + ", " + stats;
+                            statsDiv.textContent = "🐣: " + axie.breedCount + ", " + stats;
                         }
                         //prevent dupes
                         if ((content.childElementCount == 0)) {
