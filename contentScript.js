@@ -9,20 +9,29 @@ const colorMap = {
     "bird": "rgb(255, 139, 189)",
     "bug": "rgb(255, 83, 65)"
 }
-const classGeneMap = {"0000": "beast", "0001": "bug", "0010": "bird", "0011": "plant", "0100": "aquatic", "0101": "reptile", "1000": "???", "1001": "???", "1010": "???"};
+const classGeneMap = {
+    "00000":"beast",
+    "00001":"bug",
+    "00010":"bird",
+    "00011":"plant",
+    "00100":"aquatic",
+    "00101":"reptile",
+    "10000":"mech",
+    "10001":"dawn",
+    "10010":"dusk"
+};
 const typeOrder = {"patternColor": 1, "eyes": 2, "mouth": 3, "ears": 4, "horn": 5, "back": 6, "tail": 7};
-const geneColorMap = {"0000": {"0010": "ffec51","0011": "ffa12a","0100": "f0c66e", "0110": "60afce"},
-"0001": {"0010": "ff7183", "0011": "ff6d61", "0100": "f74e4e",},
-"0010": {"0010": "ff9ab8", "0011": "ffb4bb","0100": "ff778e"},
-"0011": {"0010": "ccef5e", "0011": "efd636","0100": "c5ffd9"},
-"0100": {"0010": "4cffdf", "0011": "2de8f2","0100": "759edb", "0110": "ff5a71"},
-"0101": {"0010": "fdbcff", "0011": "ef93ff","0100": "f5e1ff", "0110": "43e27d"},
-//nut hidden_1
-"1000": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"},
-//star hidden_2
-"1001": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"},
-//moon hidden_3
-"1010": {"0010": "D9D9D9", "0011": "D9D9D9","0100": "D9D9D9", "0110": "D9D9D9"}};
+const geneColorMap = {
+    "00000": {"000010": "ffec51", "000011": "ffa12a", "000100": "f0c66e", "000110": "60afce"},
+    "00001": {"000010": "ff7183", "000011": "ff6d61", "000100": "f74e4e"},
+    "00010": {"000010": "ff9ab8", "000011": "ffb4bb", "000100": "ff778e"},
+    "00011": {"000010": "ccef5e", "000011": "efd636", "000100": "c5ffd9"},
+    "00100": {"000010": "4cffdf", "000011": "2de8f2", "000100": "759edb", "000110": "ff5a71"},
+    "00101": {"000010": "fdbcff", "000011": "ef93ff", "000100": "f5e1ff", "000110": "43e27d"},
+    "10000": {"000010": "d0dada", "000011": "d4a69e", "000100": "93828a"},
+    "10001": {"000010": "d7ccfe", "000011": "fefda0", "000100": "c0fcfe"},
+    "10010": {"000010": "62c5c3", "000011": "389ec6", "000100": "1bc4c4"}
+};
 const PROBABILITIES = {d: 0.375, r1: 0.09375, r2: 0.03125};
 const parts = ["eyes", "mouth" ,"ears", "horn", "back", "tail"];
 const MAX_QUALITY = 6 * (PROBABILITIES.d + PROBABILITIES.r1 + PROBABILITIES.r2);
@@ -47,9 +56,9 @@ function debugLog(msg, ...extra) {
 }
 
 function loadComplete(mutationsList) {
-    for (let i=0; i < mutationsList.length; i++) {
+    for (let i = 0; i < mutationsList.length; i++) {
 
-        for (let j=0; j < mutationsList[i].removedNodes.length; j++) {
+        for (let j = 0; j < mutationsList[i].removedNodes.length; j++) {
             //if the spinning puff is removed then we are loaded
             if ("innerHTML" in mutationsList[i].removedNodes[j] && mutationsList[i].removedNodes[j].innerHTML.includes("puff-loading.png")) {
                 debugLog("loadComplete true", mutationsList[i].removedNodes[j]);
@@ -57,7 +66,7 @@ function loadComplete(mutationsList) {
             }
         }
 
-        for (let j=0; j < mutationsList[i].addedNodes.length; j++) {
+        for (let j = 0; j < mutationsList[i].addedNodes.length; j++) {
             if ("innerHTML" in mutationsList[i].addedNodes[j] && mutationsList[i].addedNodes[j].innerHTML.includes("<div class=\"AxieCard_") || (mutationsList[i].addedNodes[j].nodeName == "SPAN" && mutationsList[i].addedNodes[j].innerText.match(/\d+ Axies$/))) {
                 debugLog("loadComplete true", mutationsList[i].addedNodes[j]);
                 return true;
@@ -80,8 +89,8 @@ async function init() {
     https://marketplace.axieinfinity.com/axie/17469
     */
 
-    let callback = function(mutationsList, observer) {
-debugLog("mutationsList", mutationsList);
+    let callback = function (mutationsList, observer) {
+        debugLog("mutationsList", mutationsList);
 
         //ignore if not a supported page
         if (!window.location.href.match(/https:\/\/marketplace\.axieinfinity\.com\/profile\/(inventory|(0x|ronin:)\w+)\/axie/) && !window.location.href.startsWith("https://marketplace.axieinfinity.com/axie")) {
@@ -91,7 +100,7 @@ debugLog("mutationsList", mutationsList);
 
         if (window.location.href == currentURL && !window.location.href.match(ID_PATTERN)) { //ignore details page
             //fix Order By drop down z-index
-            if (mutationsList.length == 1 && mutationsList[0].target.children.length == 2){
+            if (mutationsList.length == 1 && mutationsList[0].target.children.length == 2) {
                 var mutated = mutationsList[0];
                 if (mutated.target.children[1].children[0].nodeName == "DIV" && mutated.target.children[1].children[0].textContent.search(/Highest Price|Not for sale/)) {
                     mutated.target.children[1].children[0].style["zIndex"] = 9998;
@@ -108,7 +117,7 @@ debugLog("mutationsList", mutationsList);
             debugLog('New URI detected.');
         }
         //Only call run() if we find certain conditions in the mutation list
-        if(loadComplete(mutationsList)) {
+        if (loadComplete(mutationsList)) {
             //if you browses quickly, run() won't clearInterval before the page is ready
             if (intID != -1) {
                 clearInterval(intID);
@@ -143,26 +152,29 @@ function getQualityAndPureness(traits, cls) {
             quality += PROBABILITIES.r2;
         }
     }
-    return {quality: quality/MAX_QUALITY, pureness: dPureness};
-}
-
-function strMul(str, num) {
-    var s = "";
-    for (var i = 0; i < num; i++) {
-        s += str;
-    }
-    return s;
+    return {quality: quality / MAX_QUALITY, pureness: dPureness};
 }
 
 function genesToBin(genes) {
     var genesString = genes.toString(2);
-    genesString = strMul("0", 256 - genesString.length) + genesString
+    genesString = "0".repeat(512 - genesString.length) + genesString
     return genesString;
 }
 
-const regionGeneMap = {"00000": "global", "00001": "japan"};
+const regionGeneMap = {
+    "0000": "global",
+    "0001": "mystic",
+    "0011": "japan",
+    "0101": "xmas",
+    "0110": "summer",
+    "0111": "strawberrySummer",
+    "1000": "vanillaSummer",
+    "1001": "shiny",
+    "1010": "strawberryShiny",
+    "1011": "vanillaShiny"
+};
 function getRegionFromGroup(group) {
-    let regionBin = group.slice(8,13);
+    let regionBin = group.substring(21, 25);
     if (regionBin in regionGeneMap) {
         return regionGeneMap[regionBin];
     }
@@ -170,7 +182,7 @@ function getRegionFromGroup(group) {
 }
 
 function getClassFromGroup(group) {
-    let bin = group.slice(0, 4);
+    let bin = group.substring(0, 5);
     if (!(bin in classGeneMap)) {
         return "Unknown Class";
     }
@@ -178,15 +190,14 @@ function getClassFromGroup(group) {
 }
 
 function getPatternsFromGroup(group) {
-    //patterns could be 6 bits. use 4 for now
-    return {d: group.slice(2, 8), r1: group.slice(8, 14), r2: group.slice(14, 20)};
+    return {d: group.substring(65, 74), r1: group.substring(74, 83), r2: group.substring(83, 92)};
 }
 
 function getColor(bin, cls) {
     let color;
-    if (bin == "0000") {
+    if (bin == "000000") {
         color = "ffffff";
-    } else if (bin == "0001") {
+    } else if (bin == "000001") {
         color = "7a6767";
     } else {
         color = geneColorMap[cls][bin];
@@ -195,64 +206,86 @@ function getColor(bin, cls) {
 }
 
 function getColorsFromGroup(group, cls) {
-    return {d: getColor(group.slice(20, 24), cls), r1: getColor(group.slice(24, 28), cls), r2: getColor(group.slice(28, 32), cls)};
+    return {
+        d: getColor(group.substring(92, 98), cls),
+        r1: getColor(group.substring(98, 104), cls),
+        r2: getColor(group.substring(104, 110), cls)
+    };
 }
 
-//hack. key: part name + " " + part type
-var partsClassMap = {};
-function getPartName(cls, part, region, binary, skinBinary="00") {
+function getPartName(cls, part, region, binary) {
     let trait;
     if (binary in binarytraits[cls][part]) {
-        if (skinBinary == "11") {
-            trait = binarytraits[cls][part][binary]["mystic"];
-        } else if (skinBinary == "10") {
-            trait = binarytraits[cls][part][binary]["xmas"];
-        } else if (region in binarytraits[cls][part][binary]) {
-            trait = binarytraits[cls][part][binary][region];
+        if (region in binarytraits[cls][part][binary]) {
+            trait = binarytraits[cls][part][binary][region]
         } else if ("global" in binarytraits[cls][part][binary]) {
-            trait = binarytraits[cls][part][binary]["global"];
+            trait = binarytraits[cls][part][binary]["global"]
         } else {
             trait = "UNKNOWN Regional " + cls + " " + part;
         }
     } else {
         trait = "UNKNOWN " + cls + " " + part;
     }
-    //return part + "-" + trait.toLowerCase().replace(/\s/g, "-");
-    partsClassMap[trait + " " + part] = cls;
     return trait;
 }
 
-function getPartsFromGroup(part, group, region,) {
-    let skinBinary = group.slice(0, 2);
-    let mystic = skinBinary == "11";
-    let dClass = classGeneMap[group.slice(2, 6)];
-    let dBin = group.slice(6, 12);
-    let dName = getPartName(dClass, part, region, dBin, skinBinary);
+function getPartsFromGroup(part, group) {
+    let region = getRegionFromGroup(group);
+    let mystic
+    if (region == "mystic") {
+        mystic = true
+    }
+    let dClass = classGeneMap[group.substring(25, 30)];
+    let dBin = group.substring(30, 38);
+    let dName = getPartName(dClass, part, region, dBin);
 
-    let r1Class = classGeneMap[group.slice(12, 16)];
-    let r1Bin = group.slice(16, 22);
-    let r1Name = getPartName(r1Class, part, region, r1Bin);
+    let r1Class = classGeneMap[group.substring(38, 43)];
+    let r1Bin = group.substring(43, 51);
+    let r1Name = getPartName(r1Class, part, "global", r1Bin);
 
-    let r2Class = classGeneMap[group.slice(22, 26)];
-    let r2Bin = group.slice(26, 32);
-    let r2Name = getPartName(r2Class, part, region, r2Bin);
+    let r2Class = classGeneMap[group.substring(51, 56)];
+    let r2Bin = group.substring(56, 64);
+    let r2Name = getPartName(r2Class, part, "global", r2Bin);
 
-    return {d: getPartFromName(part, dName), r1: getPartFromName(part, r1Name), r2: getPartFromName(part, r2Name), mystic: mystic};
+    return {
+        d: getPartFromName(part, dName),
+        r1: getPartFromName(part, r1Name),
+        r2: getPartFromName(part, r2Name),
+        mystic: mystic
+    };
 }
 
 function getTraits(genes) {
-    var groups = [genes.slice(0, 32), genes.slice(32, 64), genes.slice(64, 96), genes.slice(96, 128), genes.slice(128, 160), genes.slice(160, 192), genes.slice(192, 224), genes.slice(224, 256)];
+    var groups = [
+        genes.substring(0, 128),
+        genes.substring(128, 192),
+        genes.substring(192, 256),
+        genes.substring(256, 320),
+        genes.substring(320, 384),
+        genes.substring(384, 448),
+        genes.substring(448, 512),
+    ];
     let cls = getClassFromGroup(groups[0]);
-    let region = getRegionFromGroup(groups[0]);
-    let pattern = getPatternsFromGroup(groups[1]);
-    let color = getColorsFromGroup(groups[1], groups[0].slice(0, 4));
-    let eyes = getPartsFromGroup("eyes", groups[2], region);
-    let mouth = getPartsFromGroup("mouth", groups[3], region);
-    let ears = getPartsFromGroup("ears", groups[4], region);
-    let horn = getPartsFromGroup("horn", groups[5], region);
-    let back = getPartsFromGroup("back", groups[6], region);
-    let tail = getPartsFromGroup("tail", groups[7], region);
-    return {cls: cls, region: region, pattern: pattern, color: color, eyes: eyes, mouth: mouth, ears: ears, horn: horn, back: back, tail: tail};
+    let pattern = getPatternsFromGroup(groups[0]);
+    let color = getColorsFromGroup(groups[0], groups[0].substring(0, 5));
+    let eyes = getPartsFromGroup("eyes", groups[1]);
+    let mouth = getPartsFromGroup("mouth", groups[2]);
+    let ears = getPartsFromGroup("ears", groups[3]);
+    let horn = getPartsFromGroup("horn", groups[4]);
+    let back = getPartsFromGroup("back", groups[5]);
+    let tail = getPartsFromGroup("tail", groups[6]);
+
+    return {
+        cls: cls,
+        pattern: pattern,
+        color: color,
+        eyes: eyes,
+        mouth: mouth,
+        ears: ears,
+        horn: horn,
+        back: back,
+        tail: tail
+    };
 }
 
 function getPartFromName(traitType, partName) {
@@ -281,7 +314,7 @@ function getAxieIdFromURL(url) {
 async function getAccountFromProfile() {
     let axieAnchors = document.querySelectorAll("a[href^='/axie/']");
     if (axieAnchors.length > 0) {
-        for (let i = 0; i < axieAnchors.length; i++ ) {
+        for (let i = 0; i < axieAnchors.length; i++) {
             let anc = axieAnchors[i];
             let axieId = getAxieIdFromURL(anc.href);
             if (axieId == -1) continue;
@@ -297,8 +330,8 @@ function getAccount() {
     //https://marketplace.axieinfinity.com/profile/0x.../axie
     //https://marketplace.axieinfinity.com/profile/ronin:.../axie
     let checkIndex = "https://marketplace.axieinfinity.com/profile/".length;
-    let start = window.location.href.slice("https://marketplace.axieinfinity.com/profile/".length);
-    let account = start.slice(0, start.indexOf("/"));
+    let start = window.location.href.substring("https://marketplace.axieinfinity.com/profile/".length);
+    let account = start.substring(0, start.indexOf("/"));
     if (account.startsWith("ronin:")) {
         account = account.replace("ronin:", "0x");
     } else {
@@ -317,7 +350,7 @@ function getQueryParameters(name) {
     let result = [];
     for (var i = 0; i < vars.length; i++) {
         let pair = vars[i].split("=");
-        if(pair[0] == name) {
+        if (pair[0] == name) {
             result.push(pair[1]);
         }
     }
@@ -331,10 +364,10 @@ function getAxieInfoMarket(id) {
             resolve(axies[id]);
         } else {
             axies[id] = {}; //kind of mutex
-            chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function(result) {
+            chrome.runtime.sendMessage({contentScriptQuery: "getAxieInfoMarket", axieId: id}, function (result) {
                 axies[id] = result;
                 if (result.stage > 2) {
-                    axies[id].genes = genesToBin(BigInt(axies[id].genes));
+                    axies[id].genes = genesToBin(BigInt(axies[id].newGenes));
                     let traits = getTraits(axies[id].genes);
                     let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
                     axies[id].traits = traits;
@@ -362,7 +395,7 @@ async function getAxieBriefList() {
         sort = "IdDesc";
         auctionType = "All";
     }
-debugLog("Account: " + address);
+    debugLog("Account: " + address);
     let page = 1;
     let p = getQueryParameters("page");
     if (p.length > 0) {
@@ -379,8 +412,23 @@ debugLog("Account: " + address);
     }
 
     excludedParts = [];
-    let criteria = {"region":null,"parts":null,"bodyShapes":null,"classes":null,"stages":null,"numMystic":null,"pureness":null,"purity":null,"title":null,"breedCount":null,"hp":[],"skill":[],"speed":[],"morale":[]}; //"breedable":null,
-    for (let sIdx=0; sIdx < SEARCH_PARAMS.length; sIdx++) {
+    let criteria = {
+        "region": null,
+        "parts": null,
+        "bodyShapes": null,
+        "classes": null,
+        "stages": null,
+        "numMystic": null,
+        "pureness": null,
+        "purity": null,
+        "title": null,
+        "breedCount": null,
+        "hp": [],
+        "skill": [],
+        "speed": [],
+        "morale": []
+    }; //"breedable":null,
+    for (let sIdx = 0; sIdx < SEARCH_PARAMS.length; sIdx++) {
         let option = SEARCH_PARAMS[sIdx];
         let opts = getQueryParameters(option);
         if (opts.length > 0) {
@@ -390,12 +438,12 @@ debugLog("Account: " + address);
             }
             let opt = [];
             if (["stage", "breedCount", "mystic", "pureness", "hp", "speed", "skill", "morale", "purity"].indexOf(option) != -1) {
-                for (let i=0; i < opts.length; i++) {
+                for (let i = 0; i < opts.length; i++) {
                     opt.push(parseInt(opts[i]));
                 }
                 opt.sort((a, b) => a - b);
             } else {
-                for (let i=0; i < opts.length; i++) {
+                for (let i = 0; i < opts.length; i++) {
                     if ("title" == option) {
                         opt.push(opts[i].replace(/-/g, " "));
                     } else {
@@ -412,7 +460,7 @@ debugLog("Account: " + address);
                 if (["part", "excludeParts"].includes(option)) {
                     if (criteria[OPTIONS_MAP[option]]) {
                         combined = [...criteria[OPTIONS_MAP[option]], ...opt];
-                        for (let i=0; i < excludedParts.length; i++) {
+                        for (let i = 0; i < excludedParts.length; i++) {
                             combined = combined.filter(e => e !== excludedParts[i]);
                         }
                         criteria[OPTIONS_MAP[option]] = combined;
@@ -429,14 +477,21 @@ debugLog("Account: " + address);
     }
 
     return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({contentScriptQuery: "getAxieBriefList", address: address, page: page, sort: sort, auctionType: auctionType, criteria: criteria}, function(results) {
-            for (let i=0; i < results.length; i++) {
+        chrome.runtime.sendMessage({
+            contentScriptQuery: "getAxieBriefList",
+            address: address,
+            page: page,
+            sort: sort,
+            auctionType: auctionType,
+            criteria: criteria
+        }, function (results) {
+            for (let i = 0; i < results.length; i++) {
                 let axie = results[i];
                 let id = axie.id;
                 debugLog("got axie " + id);
                 axies[id] = axie;
                 if (axie.stage > 2) {
-                    axies[id].genes = genesToBin(BigInt(axies[id].genes));
+                    axies[id].genes = genesToBin(BigInt(axies[id].newGenes));
                     let traits = getTraits(axies[id].genes);
                     let qp = getQualityAndPureness(traits, axies[id].class.toLowerCase());
                     axies[id].traits = traits;
