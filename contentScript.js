@@ -36,9 +36,19 @@ const PROBABILITIES = {d: 0.375, r1: 0.09375, r2: 0.03125};
 const parts = ["eyes", "mouth" ,"ears", "horn", "back", "tail"];
 const MAX_QUALITY = 6 * (PROBABILITIES.d + PROBABILITIES.r1 + PROBABILITIES.r2);
 const MAX_RUN_RETRIES = 30;
-const OPTIONS_MAP = {"class": "classes", "part": "parts", "bodyShape": "bodyShapes", "stage": "stages", "mystic": "numMystic", "excludeParts": "parts"};
-const SEARCH_PARAMS = ["class", "stage", "breedCount", "mystic", "pureness", "region", "title", "part", "bodyShape", "hp", "speed", "skill", "morale", "excludeParts", "purity"];
-
+const OPTIONS_MAP = {
+    "class": "classes",
+    "part": "parts",
+    "bodyShape": "bodyShapes",
+    "stage": "stages",
+    "mystic": "numMystic",
+    "excludeParts": "parts",
+    "japan": "numJapan",
+    "xmas": "numXmas",
+    "shiny": "numShiny",
+    "summer": "numSummer"
+};
+const SEARCH_PARAMS = ["class", "stage", "breedCount", "mystic", "pureness", "region", "title", "part", "bodyShape", "hp", "speed", "skill", "morale", "excludeParts", "purity", "japan", "xmas", "shiny", "summer", "ppBeast", "ppAquatic", "ppPlant", "ppBug", "ppBird", "ppReptile", "ppMech", "ppDawn", "ppDusk"];
 var notReadyCount = 0;
 var currentURL = window.location.href;
 var axies = {};
@@ -437,7 +447,7 @@ async function getAxieBriefList() {
                 continue;
             }
             let opt = [];
-            if (["stage", "breedCount", "mystic", "pureness", "hp", "speed", "skill", "morale", "purity"].indexOf(option) != -1) {
+            if (["stage", "breedCount", "mystic", "pureness", "hp", "speed", "skill", "morale", "purity", "japan", "xmas", "shiny", "summer", "ppBeast", "ppAquatic", "ppPlant", "ppBug", "ppBird", "ppReptile", "ppMech", "ppDawn", "ppDusk"].indexOf(option) != -1) {
                 for (let i = 0; i < opts.length; i++) {
                     opt.push(parseInt(opts[i]));
                 }
